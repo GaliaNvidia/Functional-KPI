@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Functional KPI Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #76B900;
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 3px solid #5a8f00;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .legend {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            background: #f9fafb;
+            padding: 20px 25px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .legend-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+            color: #4b5563;
+        }
+
+        .legend-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-bar {
+            width: 60px;
+            height: 8px;
+            border-radius: 4px;
+        }
+
+        .legend-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .color-red { background-color: #ef4444; }
+        .color-yellow { background-color: #fbbf24; }
+        .color-green { background-color: #76B900; }
+
+        .controls {
+            padding: 30px 40px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #9ca3af;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #6b7280;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(156, 163, 175, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #4b5563;
+            border: 2px solid #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        .btn-success {
+            background: #9ca3af;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #6b7280;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(156, 163, 175, 0.4);
+        }
+
+        .table-container {
+            padding: 40px;
+            overflow-x: auto;
+        }
+
+        .kpi-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .kpi-table th {
+            background: #000000;
+            color: white;
+            padding: 15px 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 15px;
+            border: 1px solid #333333;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .kpi-table td {
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            text-align: center;
+        }
+
+        .kpi-table tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .metric-cell {
+            text-align: left;
+            font-weight: 500;
+            background-color: #f3f4f6;
+            min-width: 300px;
+        }
+
+        .metric-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .metric-details {
+            list-style: none;
+            padding-left: 0;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .metric-details li {
+            padding: 3px 0;
+        }
+
+        .metric-details li:before {
+            content: "• ";
+            color: #76B900;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .score-cell {
+            padding: 8px !important;
+            min-width: 120px;
+        }
+
+        .cm-score {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 8px;
+            margin: 2px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .cm-score:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 0 2px #76B900;
+        }
+
+        .score-input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #76B900;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            outline: none;
+        }
+
+        .threshold-cell {
+            font-weight: 600;
+            color: #4b5563;
+            font-size: 13px;
+        }
+
+        .slides-cell {
+            text-align: left;
+            font-size: 13px;
+            min-width: 200px;
+        }
+
+        .slides-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .slides-list li {
+            padding: 4px 0;
+            color: #6b7280;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4b5563;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #76B900;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #76B900;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+            display: none;
+            z-index: 2000;
+        }
+
+        .toast.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .index-cell {
+            background-color: #9ca3af;
+            color: white;
+            font-weight: bold;
+            width: 50px;
+        }
+
+        .category-header {
+            background: #9ca3af;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            padding: 20px 15px !important;
+            text-align: left !important;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+
+        .category-upload {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .upload-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background: white;
+            color: #9ca3af;
+        }
+
+        .file-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>FUNCTIONAL KPI</h1>
+        </div>
+
+        <div class="legend">
+            <span class="legend-title">Functional Measures</span>
+            <div class="legend-item">
+                <div class="legend-bar color-red"></div>
+                <span class="legend-label">Min</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-bar color-yellow"></div>
+                <span class="legend-label">Target</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-bar color-green"></div>
+                <span class="legend-label">Stretch</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="showAddQuarterModal()">➕ Add Quarter</button>
+            <button class="btn btn-success" onclick="copyTableToClipboard()">📋 Copy to Clipboard</button>
+            <button class="btn btn-secondary" onclick="exportToCSV()">📊 Export to CSV</button>
+            <button class="btn btn-secondary" onclick="clearAllData()">🗑️ Clear All Data</button>
+        </div>
+
+        <div class="table-container">
+            <table class="kpi-table" id="kpiTable">
+                <thead>
+                    <tr>
+                        <th class="index-cell">#</th>
+                        <th>Metrics (Measures)</th>
+                        <th class="quarter-header">Q4FY25</th>
+                        <th class="quarter-header">Q1FY26</th>
+                        <th class="quarter-header">Q2FY26</th>
+                        <th class="quarter-header">Q3Y26</th>
+                        <th>Min/Target/Stretch</th>
+                        <th>Slides</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2>Add New Quarter</h2>
+            <div class="form-group">
+                <label>Quarter Name (e.g., Q4FY26)</label>
+                <input type="text" id="quarterInput" placeholder="Q4FY26">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideAddQuarterModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="addQuarter()">Add Quarter</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- Hidden file inputs for each category -->
+    <input type="file" id="uploadProductionKPIs" class="file-input" accept=".csv" onchange="handleFileUpload(event, 'Production KPIs')">
+    <input type="file" id="uploadProcurement" class="file-input" accept=".csv" onchange="handleFileUpload(event, 'Procurement')">
+
+    <script>
+        const CMS = ["Flex", "Jabil", "Fabrinet"];
+
+        const METRICS = [
+            {
+                id: 1,
+                category: "Production KPIs",
+                name: "% of On Time Delivery MP",
+                cms: ["Flex", "Jabil", "Fabrinet"],
+                min: 98, target: 100, stretch: 100, unit: "%",
+                slides: ["OTD MP- Flex", "OTD MP- Jabil", "OTD MP-Fabrinet"]
+            },
+            {
+                id: 2,
+                category: "Production KPIs",
+                name: "% of On Time Delivery - STD RW",
+                cms: ["Flex", "Jabil", "Fabrinet"],
+                min: 98, target: 100, stretch: 100, unit: "%",
+                slides: ["OTD STD rework-Flex", "OTD STD rework -Jabil", "OTD STD rework-Fabrinet"]
+            },
+            {
+                id: 3,
+                category: "Production KPIs",
+                name: "% of Reschedule (Push out) performance in MP",
+                cms: ["Flex Boards, Flex SYS+SW", "Jabil Boards, Jabil SYS+SW", "Fabrinet Interconnect"],
+                min: 3, target: 5, stretch: 5, unit: "",
+                slides: ["RSOD- Flex", "RSOD-Jabil", "RSOD-Fabrinet"]
+            },
+            {
+                id: 4,
+                category: "Procurement",
+                name: "Inventory/E&O Reporting and Liability Mitigation",
+                cms: ["Flex Boards, Flex SYS+SW", "Jabil Boards, Jabil SYS+SW", "Fabrinet Interconnect"],
+                min: 4, target: 5, stretch: 5, unit: "",
+                slides: ["Inventory/E&O & Liability-Flex", "Inventory/E&O & Liability-Jabil", "Inventory/E&O & Liability Fabrinet"]
+            },
+            {
+                id: 5,
+                category: "Procurement",
+                name: "Procurement Analytics",
+                cms: ["Flex Boards, Flex SYS+SW", "Jabil Boards, Jabil SYS+SW", "Fabrinet Interconnect"],
+                min: 4, target: 5, stretch: 5, unit: "",
+                slides: ["Proc Analytics-Flex", "Proc Analytics- Jabil", "Proc Analytics-Fabrinet"]
+            },
+            {
+                id: 6,
+                category: "Procurement",
+                name: "Materials Escalation & LT Alignment",
+                cms: ["Flex Boards, Flex SYS+SW", "Jabil Boards, Jabil SYS+SW", "Fabrinet Interconnect"],
+                min: 4, target: 5, stretch: 5, unit: "",
+                slides: ["ME & LT-Flex", "ME & LT- Jabil", "ME & LT-Fabrinet"]
+            },
+            {
+                id: 7,
+                category: "Procurement",
+                name: "Component PO TAT/Commit Performance",
+                cms: ["Flex Boards, Flex SYS+SW", "Jabil Boards, Jabil SYS+SW", "Fabrinet Interconnect"],
+                min: 4, target: 5, stretch: 5, unit: "",
+                slides: ["Comp. PO Perf.-Flex", "Comp. PO Perf.-Jabil", "Comp. PO Perf.-Fabrinet"]
+            },
+            {
+                id: 8,
+                category: "Procurement",
+                name: "New Product Launch Readiness",
+                cms: ["Flex Boards, Flex SYS+SW", "Jabil Boards, Jabil SYS+SW", "Fabrinet Interconnect"],
+                min: 4, target: 5, stretch: 5, unit: "",
+                slides: ["NPL Readiness- Flex", "NPL Readiness-Jabil", "NPL Readiness-Fabrinet"]
+            },
+            {
+                id: 9,
+                category: "Procurement",
+                name: "CM Material Audit",
+                cms: ["Flex", "Jabil", "Fabrinet Interconnect"],
+                min: 98, target: 100, stretch: 100, unit: "%",
+                slides: ["Material audit-Flex", "Material audit-Jabil", "Material audit-Fabrinet"]
+            }
+        ];
+
+        let quarters = ['Q4FY25', 'Q1FY26', 'Q2FY26', 'Q3Y26'];
+        let scores = {
+            // Metric 1 - On Time Delivery MP
+            '1-Q4FY25-Flex': '99.52', '1-Q4FY25-Jabil': '99.98', '1-Q4FY25-Fabrinet': '100',
+            '1-Q1FY26-Flex': '99.16', '1-Q1FY26-Jabil': '99.99', '1-Q1FY26-Fabrinet': '93.38',
+            '1-Q2FY26-Flex': '99.38', '1-Q2FY26-Jabil': '99.87', '1-Q2FY26-Fabrinet': '97.10',
+            // Metric 2 - On Time Delivery STD RW
+            '2-Q4FY25-Flex': '100', '2-Q4FY25-Jabil': '100', '2-Q4FY25-Fabrinet': '100',
+            '2-Q1FY26-Flex': '100', '2-Q1FY26-Jabil': '100', '2-Q1FY26-Fabrinet': '96.30',
+            '2-Q2FY26-Flex': '100', '2-Q2FY26-Jabil': '100', '2-Q2FY26-Fabrinet': '100',
+            // Metric 3 - Reschedule
+            '3-Q4FY25-Flex': '3.8', '3-Q4FY25-Jabil': '4.4', '3-Q4FY25-Fabrinet': '5.0',
+            '3-Q1FY26-Flex': '4.5', '3-Q1FY26-Jabil': '5.0', '3-Q1FY26-Fabrinet': '3.54',
+            '3-Q2FY26-Flex': '3.85', '3-Q2FY26-Jabil': '5.0', '3-Q2FY26-Fabrinet': '4.85',
+        };
+
+        function loadData() {
+            const saved = localStorage.getItem('kpiData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                quarters = data.quarters;
+                scores = data.scores;
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('kpiData', JSON.stringify({ quarters, scores }));
+        }
+
+        function getColor(value, metric) {
+            if (!value || value === '') return 'transparent';
+            const numValue = parseFloat(value);
+            if (isNaN(numValue)) return 'transparent';
+
+            const { min, target } = metric;
+
+            if (metric.unit === '%') {
+                if (numValue < min) return '#ef4444';
+                if (numValue < target) return '#fbbf24';
+                return '#76B900';
+            } else {
+                if (numValue < min) return '#ef4444';
+                if (numValue < target) return '#fbbf24';
+                return '#76B900';
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            let currentCategory = '';
+
+            METRICS.forEach(metric => {
+                // Add category header row if we're starting a new category
+                if (metric.category !== currentCategory) {
+                    currentCategory = metric.category;
+                    const categoryRow = document.createElement('tr');
+                    const categoryCell = document.createElement('td');
+                    categoryCell.className = 'category-header';
+                    categoryCell.colSpan = 8; // Span all columns
+                    categoryCell.innerHTML = `
+                        ${currentCategory}
+                        <div class="category-upload">
+                            <button class="upload-btn" onclick="downloadCSVTemplate('${currentCategory}')" style="margin-right: 10px;">📥 Download Template</button>
+                            <button class="upload-btn" onclick="triggerUpload('${currentCategory}')">📤 Upload CSV</button>
+                        </div>
+                    `;
+                    categoryRow.appendChild(categoryCell);
+                    tbody.appendChild(categoryRow);
+                }
+
+                const row = document.createElement('tr');
+                
+                // Index cell
+                const indexCell = document.createElement('td');
+                indexCell.className = 'index-cell';
+                indexCell.textContent = metric.id;
+                row.appendChild(indexCell);
+
+                // Metric cell
+                const metricCell = document.createElement('td');
+                metricCell.className = 'metric-cell';
+                metricCell.innerHTML = `
+                    <div class="metric-name">${metric.name}</div>
+                    <ul class="metric-details">
+                        ${metric.cms.map(d => `<li>${d}</li>`).join('')}
+                    </ul>
+                `;
+                row.appendChild(metricCell);
+
+                // Quarter cells - now with 3 scores each
+                quarters.forEach(quarter => {
+                    const cell = document.createElement('td');
+                    cell.className = 'score-cell';
+                    
+                    // Create 3 sub-cells for each CM
+                    metric.cms.forEach((cm, cmIdx) => {
+                        const cmName = CMS[cmIdx]; // Get short name (Flex, Jabil, Fabrinet)
+                        const key = `${metric.id}-${quarter}-${cmName}`;
+                        const value = scores[key] || '';
+                        
+                        const cmScore = document.createElement('div');
+                        cmScore.className = 'cm-score';
+                        cmScore.style.backgroundColor = getColor(value, metric);
+                        cmScore.textContent = value || '';
+                        cmScore.onclick = (e) => {
+                            e.stopPropagation();
+                            editCell(metric.id, quarter, cmName, cmScore, metric);
+                        };
+                        cell.appendChild(cmScore);
+                    });
+                    
+                    row.appendChild(cell);
+                });
+
+                // Threshold cell
+                const thresholdCell = document.createElement('td');
+                thresholdCell.className = 'threshold-cell';
+                thresholdCell.textContent = `${metric.min}/${metric.target}/${metric.stretch}`;
+                row.appendChild(thresholdCell);
+
+                // Slides cell
+                const slidesCell = document.createElement('td');
+                slidesCell.className = 'slides-cell';
+                slidesCell.innerHTML = `
+                    <ul class="slides-list">
+                        ${metric.slides.map(s => `<li>${s}</li>`).join('')}
+                    </ul>
+                `;
+                row.appendChild(slidesCell);
+
+                tbody.appendChild(row);
+            });
+
+            // Update header quarters
+            const headers = document.querySelectorAll('.quarter-header');
+            quarters.forEach((quarter, idx) => {
+                if (headers[idx]) headers[idx].textContent = quarter;
+            });
+        }
+
+        function editCell(metricId, quarter, cmName, cmScoreDiv, metric) {
+            const key = `${metricId}-${quarter}-${cmName}`;
+            const currentValue = scores[key] || '';
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'score-input';
+            input.value = currentValue;
+            input.style.width = '100%';
+            
+            cmScoreDiv.innerHTML = '';
+            cmScoreDiv.appendChild(input);
+            input.focus();
+
+            input.onblur = () => {
+                let value = input.value.trim();
+                
+                // Auto-convert decimal to percentage for percentage metrics
+                if (value && metric.unit === '%') {
+                    const numValue = parseFloat(value);
+                    if (!isNaN(numValue) && numValue > 0 && numValue < 1) {
+                        value = (numValue * 100).toString();
+                    }
+                }
+                
+                scores[key] = value;
+                saveData();
+                renderTable();
+            };
+
+            input.onkeypress = (e) => {
+                if (e.key === 'Enter') {
+                    input.blur();
+                }
+            };
+        }
+
+        function showAddQuarterModal() {
+            document.getElementById('modalOverlay').classList.add('active');
+            document.getElementById('quarterInput').value = '';
+            document.getElementById('quarterInput').focus();
+        }
+
+        function hideAddQuarterModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+        function addQuarter() {
+            const input = document.getElementById('quarterInput');
+            const newQuarter = input.value.trim();
+            
+            if (newQuarter) {
+                quarters.push(newQuarter);
+                quarters = quarters.slice(-4); // Keep only last 4
+                saveData();
+                renderTable();
+                hideAddQuarterModal();
+                showToast(`Quarter ${newQuarter} added successfully!`);
+            }
+        }
+
+        function copyTableToClipboard() {
+            const table = document.getElementById('kpiTable');
+            const range = document.createRange();
+            range.selectNode(table);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+            showToast('Table copied to clipboard! Ready to paste into your presentation.');
+        }
+
+        function exportToCSV() {
+            let csv = 'Metric,CM,' + quarters.join(',') + ',Min/Target/Stretch\n';
+            
+            METRICS.forEach(metric => {
+                CMS.forEach(cm => {
+                    csv += `"${metric.name}",${cm},`;
+                    quarters.forEach(quarter => {
+                        const key = `${metric.id}-${quarter}-${cm}`;
+                        csv += `${scores[key] || ''},`;
+                    });
+                    csv += `${metric.min}/${metric.target}/${metric.stretch}\n`;
+                });
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'kpi-data.csv';
+            a.click();
+            showToast('Data exported to CSV!');
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                scores = {};
+                quarters = [];
+                saveData();
+                renderTable();
+                showToast('All data cleared!');
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('active');
+            setTimeout(() => {
+                toast.classList.remove('active');
+            }, 3000);
+        }
+
+        function triggerUpload(category) {
+            const fileInputId = category === 'Production KPIs' ? 'uploadProductionKPIs' : 'uploadProcurement';
+            document.getElementById(fileInputId).click();
+        }
+
+        function handleFileUpload(event, category) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    parseCSVAndUpdateScores(csv, category);
+                    event.target.value = ''; // Reset file input
+                } catch (error) {
+                    alert('Error reading file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSVAndUpdateScores(csv, category) {
+            const lines = csv.split('\n').filter(line => line.trim());
+            if (lines.length < 2) {
+                alert('CSV file is empty or invalid');
+                return;
+            }
+
+            // Parse header row to get quarters
+            const headers = lines[0].split(',').map(h => h.trim());
+            // Expected format: Metric,CM,Q4FY25,Q1FY26,Q2FY26,...,Min/Target/Stretch
+            const quarterColumns = headers.slice(2, -1); // Skip "Metric" and "CM", take until before "Min/Target/Stretch"
+
+            // Get metrics for this category
+            const categoryMetrics = METRICS.filter(m => m.category === category);
+            let updatedCount = 0;
+
+            // Parse data rows
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+                if (values.length < 3) continue;
+
+                const metricName = values[0];
+                const cmName = values[1];
+
+                // Find matching metric
+                const metric = categoryMetrics.find(m => m.name === metricName);
+                if (!metric) continue;
+
+                // Update scores for each quarter
+                quarterColumns.forEach((quarter, idx) => {
+                    let scoreValue = values[2 + idx]; // +2 to skip Metric and CM columns
+                    if (scoreValue && scoreValue !== '') {
+                        // Auto-convert decimal to percentage for percentage metrics
+                        if (metric.unit === '%') {
+                            const numValue = parseFloat(scoreValue);
+                            if (!isNaN(numValue) && numValue > 0 && numValue < 1) {
+                                scoreValue = (numValue * 100).toString();
+                            }
+                        }
+                        
+                        const key = `${metric.id}-${quarter}-${cmName}`;
+                        scores[key] = scoreValue;
+                        updatedCount++;
+                    }
+                });
+            }
+
+            if (updatedCount > 0) {
+                saveData();
+                renderTable();
+                showToast(`✅ Successfully uploaded ${updatedCount} scores for ${category}!`);
+            } else {
+                alert('No matching data found in CSV. Please check the format.');
+            }
+        }
+
+        function downloadCSVTemplate(category) {
+            const categoryMetrics = METRICS.filter(m => m.category === category);
+            let csv = 'Metric,CM,' + quarters.join(',') + ',Min/Target/Stretch\n';
+            
+            categoryMetrics.forEach(metric => {
+                CMS.forEach(cm => {
+                    csv += `"${metric.name}",${cm},`;
+                    quarters.forEach(() => {
+                        csv += ','; // Empty cells for user to fill
+                    });
+                    csv += `${metric.min}/${metric.target}/${metric.stretch}\n`;
+                });
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${category.replace(/\s+/g, '_')}_template.csv`;
+            a.click();
+            showToast(`📥 Template downloaded for ${category}!`);
+        }
+
+        // Initialize
+        loadData();
+        renderTable();
+
+        // Allow Enter key in modal
+        document.getElementById('quarterInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addQuarter();
+        });
+
+        // Close modal on overlay click
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'modalOverlay') hideAddQuarterModal();
+        });
+    </script>
+</body>
+</html>
+
