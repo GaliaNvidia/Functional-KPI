@@ -1,0 +1,91 @@
+📊 KPI DASHBOARD - EXCEL FORMAT GUIDE
+======================================
+
+📄 FILE: kpi-data.csv
+----------------------
+This CSV file opens directly in Excel, maintaining the exact structure from the dashboard.
+
+🔢 COLUMN STRUCTURE:
+--------------------
+Column A: Category (e.g., "FUNCTIONAL MEASURES", "PRODUCTION KPIS")
+Column B: Metric (e.g., "First Time Pass %", "CM Material Audit")
+Column C: CM (Contract Manufacturer name, e.g., "Flex")
+Column D: Product Line (e.g., "Boards", "Systems")
+Column E: Min (Minimum threshold value)
+Column F: Target (Target threshold value)
+Column G: Stretch (Stretch threshold value)
+Column H+: Quarter Values (Q1'25, Q2'25, Q3'25, etc.)
+
+📋 EXAMPLE ROWS:
+----------------
+| Category            | Metric           | CM   | Product Line | Min | Target | Stretch | Q1'25 | Q2'25 | Q3'25 | Q4'25 |
+|---------------------|------------------|------|--------------|-----|--------|---------|-------|-------|-------|-------|
+| FUNCTIONAL MEASURES | First Time Pass %| Flex | Boards       | 92  | 98     | 98      | 95.5  | 96.2  | 97.1  | 98.0  |
+| FUNCTIONAL MEASURES | First Time Pass %| Flex | Systems      | 92  | 98     | 98      | 94.3  | 95.8  | 96.5  | 97.2  |
+| PRODUCTION KPIS     | Commits Achieved | Flex | Boards       | 3   | 5      | 5       | 4.5   | 4.8   | 5.0   | 5.0   |
+
+✅ FEATURES:
+------------
+✓ All numbers stored as-is (no conversion or loss)
+✓ Empty cells remain empty (not filled with 0 or N/A)
+✓ Easy to sort, filter, and analyze in Excel
+✓ Can create pivot tables and charts
+✓ Compatible with Excel formulas
+✓ UTF-8 encoding for international characters
+
+📊 OPEN IN EXCEL:
+-----------------
+1. Double-click "kpi-data.csv"
+2. Excel will open automatically
+3. Data is ready to use - no import needed!
+
+Alternative:
+1. Open Excel first
+2. File → Open → Select "kpi-data.csv"
+3. Data loads with proper formatting
+
+💡 EXCEL TIPS:
+--------------
+• Freeze Row 1 (headers): View → Freeze Panes → Freeze Top Row
+• Auto-filter: Click any header → Data → Filter
+• Conditional formatting: Highlight scores based on Min/Target/Stretch
+• Charts: Select quarter columns → Insert → Chart
+• Pivot tables: Insert → PivotTable (for analysis)
+
+🔄 AUTO-UPDATE:
+---------------
+Every time you save in the dashboard:
+• kpi-data.csv is automatically updated
+• Open Excel files will show a "refresh" prompt
+• Close and reopen Excel to see latest data
+
+📦 BACKUPS:
+-----------
+All backups in "backups/" folder are also in CSV format:
+• kpi-data-20251108_150000.csv
+• kpi-data-20251108_140000.csv
+• etc.
+
+You can open any backup directly in Excel!
+
+🎯 USE CASES:
+-------------
+✓ Monthly reports and presentations
+✓ Trend analysis with Excel charts
+✓ Share with stakeholders via email
+✓ Import into other systems
+✓ Create custom dashboards in Excel
+✓ Archive historical data
+
+📧 SHARING:
+-----------
+The CSV file is perfect for sharing:
+• Email attachment (small file size)
+• Teams/Slack message
+• Upload to SharePoint/OneDrive
+• Import into BI tools
+• Print-friendly format
+
+Generated: 2025-11-08
+KPI Dashboard Backend v1.0
+

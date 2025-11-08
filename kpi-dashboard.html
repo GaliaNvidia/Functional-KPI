@@ -15,11 +15,12 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
             min-height: 100vh;
-            padding: 30px 20px;
+            padding: 20px 10px;
         }
 
         .container {
-            max-width: 1800px;
+            max-width: 98%;
+            width: 100%;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -30,7 +31,7 @@
         .header {
             background: linear-gradient(135deg, #76B900 0%, #5a8f00 100%);
             color: white;
-            padding: 40px 50px;
+            padding: 30px 20px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -89,7 +90,7 @@
         .color-green { background-color: #76B900; }
 
         .controls {
-            padding: 30px 50px;
+            padding: 20px 20px;
             background: #ffffff;
             border-bottom: 1px solid #e5e7eb;
             display: flex;
@@ -180,7 +181,7 @@
         }
 
         .table-container {
-            padding: 30px 50px 50px 50px;
+            padding: 20px 20px 30px 20px;
             overflow-x: auto;
             background: #fafafa;
         }
@@ -199,10 +200,10 @@
         .kpi-table th {
             background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
             color: white;
-            padding: 18px 15px;
+            padding: 12px 8px;
             text-align: center;
             font-weight: 500;
-            font-size: 13px;
+            font-size: 12px;
             border: none;
             border-bottom: 2px solid #76B900;
             position: sticky;
@@ -213,7 +214,7 @@
         }
 
         .kpi-table td {
-            padding: 15px 12px;
+            padding: 12px 8px;
             border: none;
             border-bottom: 1px solid #f3f4f6;
             text-align: center;
@@ -229,7 +230,7 @@
 
         .metric-cell {
             text-align: left !important;
-            min-width: 250px;
+            min-width: 180px;
         }
 
         .metric-name {
@@ -258,7 +259,7 @@
 
         .score-cell {
             padding: 8px !important;
-            min-width: 150px;
+            min-width: 100px;
         }
 
         .cm-score {
@@ -398,7 +399,7 @@
 
         .trend-cell {
             text-align: center;
-            min-width: 250px;
+            min-width: 180px;
             padding: 15px !important;
         }
 
@@ -432,10 +433,23 @@
                 <div class="legend-bar color-green"></div>
                 <span class="legend-label">Stretch</span>
             </div>
+            <div style="margin-left: 30px; padding-left: 30px; border-left: 1px solid #e5e7eb; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 11px; color: #6b7280; font-weight: 500;">Current Quarter Drop (>10% or >1pt):</span>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="width: 8px; height: 8px; background: #ef4444; transform: rotate(45deg); display: inline-block;"></span>
+                    <span style="font-size: 11px; color: #4b5563; font-weight: 500;">= Min Range</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="width: 8px; height: 8px; background: #f59e0b; transform: rotate(45deg); display: inline-block;"></span>
+                    <span style="font-size: 11px; color: #4b5563; font-weight: 500;">= Target Range</span>
+                </div>
+            </div>
         </div>
 
         <div class="controls">
             <button class="btn btn-sm" onclick="saveAllData()">💾 Save Data</button>
+            <button class="btn btn-sm" id="sharePointBtn" onclick="enableSharePoint()" style="background: #0078d4; color: white;">🔗 Connect to SharePoint</button>
+            <span id="sharePointStatus" style="font-size: 11px; color: #9ca3af; margin-left: 10px;"></span>
             
             <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
                 <span style="font-size: 11px; color: #9ca3af; font-weight: 500;">Production KPIs:</span>
@@ -616,6 +630,203 @@
             '3-Q2FY26-Flex': '3.85,4.2', '3-Q2FY26-Jabil': '5.0,4.7', '3-Q2FY26-Fabrinet': '4.85',
         };
 
+        // ==================== SHAREPOINT MCP INTEGRATION ====================
+        
+        // SharePoint Configuration
+        const SHAREPOINT_CONFIG = {
+            siteUrl: 'https://nvidia.sharepoint.com/sites/QBRmanagement/',
+            fileName: 'KPI_Dashboard_Data.csv',
+            fileUrl: 'https://nvidia.sharepoint.com/sites/QBRmanagement/Shared%20Documents/KPI_Dashboard_Data.csv',
+            autoSaveDelay: 2000 // Auto-save 2 seconds after last change
+        };
+
+        let autoSaveTimeout = null;
+        let isSharePointEnabled = false;
+        let sharePointAvailable = false;
+
+        // Check if SharePoint MCP backend is available
+        async function checkSharePointAvailability() {
+            try {
+                const response = await fetch('/api/sharepoint/health', { method: 'GET' });
+                sharePointAvailable = response.ok;
+                return sharePointAvailable;
+            } catch (error) {
+                console.log('SharePoint backend not available, using local storage only');
+                sharePointAvailable = false;
+                return false;
+            }
+        }
+
+        // Enable SharePoint sync
+        async function enableSharePoint() {
+            const statusEl = document.getElementById('sharePointStatus');
+            const btnEl = document.getElementById('sharePointBtn');
+            
+            statusEl.textContent = '⏳ Connecting...';
+            
+            const available = await checkSharePointAvailability();
+            
+            if (available) {
+                isSharePointEnabled = true;
+                statusEl.textContent = '✅ Connected';
+                statusEl.style.color = '#10b981';
+                btnEl.style.display = 'none';
+                showToast('✅ Connected to SharePoint!');
+                await loadFromSharePoint();
+            } else {
+                statusEl.textContent = '⚠️ Backend not available';
+                statusEl.style.color = '#f59e0b';
+                showToast('⚠️ SharePoint backend not running. Using local storage.');
+            }
+        }
+
+        // Save data to SharePoint via MCP backend
+        async function saveToSharePoint() {
+            if (!isSharePointEnabled || !sharePointAvailable) return;
+
+            try {
+                const csvData = prepareCSVData();
+                
+                const response = await fetch('/api/sharepoint/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fileUrl: SHAREPOINT_CONFIG.fileUrl,
+                        content: csvData
+                    })
+                });
+
+                if (response.ok) {
+                    console.log('✅ Data saved to SharePoint');
+                    showToast('💾 Saved to SharePoint');
+                } else {
+                    throw new Error('Save failed');
+                }
+            } catch (error) {
+                console.error('❌ SharePoint save failed:', error);
+                showToast('⚠️ SharePoint save failed. Data saved locally.');
+            }
+        }
+
+        // Load data from SharePoint via MCP backend
+        async function loadFromSharePoint() {
+            if (!isSharePointEnabled || !sharePointAvailable) return false;
+
+            try {
+                const response = await fetch('/api/sharepoint/load', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fileUrl: SHAREPOINT_CONFIG.fileUrl
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.content) {
+                        parseCSVData(data.content);
+                        console.log('✅ Data loaded from SharePoint');
+                        showToast('📥 Loaded from SharePoint');
+                        renderTable();
+                        return true;
+                    }
+                }
+            } catch (error) {
+                console.error('❌ SharePoint load failed:', error);
+                showToast('⚠️ Loading from SharePoint failed. Using local data.');
+            }
+            return false;
+        }
+
+        // Prepare data as CSV for SharePoint
+        function prepareCSVData() {
+            let csv = 'Category,Metric,CM,CM Description';
+            const quarters_all = [...new Set([...quarters, ...procurementQuarters])];
+            quarters_all.forEach(q => csv += `,${q}`);
+            csv += '\n';
+            
+            METRICS.forEach(metric => {
+                const categoryQuarters = metric.category === 'Procurement KPI' ? procurementQuarters : quarters;
+                
+                metric.cms.forEach((cmDescription, idx) => {
+                    const cmName = CMS[idx];
+                    csv += `"${metric.category}","${metric.name}","${cmName}","${cmDescription}"`;
+                    
+                    quarters_all.forEach(quarter => {
+                        const key = `${metric.id}-${quarter}-${cmName}`;
+                        const value = scores[key] || '';
+                        csv += `,"${value}"`;
+                    });
+                    
+                    csv += '\n';
+                });
+            });
+            
+            return csv;
+        }
+
+        // Parse CSV data from SharePoint
+        function parseCSVData(csvContent) {
+            const lines = csvContent.split('\n');
+            const headers = lines[0].split(',');
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                
+                const values = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                if (!values || values.length < 4) continue;
+                
+                const metricName = values[1].replace(/"/g, '');
+                const cmName = values[2].replace(/"/g, '');
+                
+                const metric = METRICS.find(m => m.name === metricName);
+                if (!metric) continue;
+                
+                for (let j = 4; j < values.length && j < headers.length; j++) {
+                    const quarter = headers[j].trim();
+                    const value = values[j].replace(/"/g, '').trim();
+                    if (value) {
+                        const key = `${metric.id}-${quarter}-${cmName}`;
+                        scores[key] = value;
+                    }
+                }
+            }
+        }
+
+        // Schedule auto-save
+        function scheduleAutoSave() {
+            if (autoSaveTimeout) {
+                clearTimeout(autoSaveTimeout);
+            }
+            
+            autoSaveTimeout = setTimeout(async () => {
+                saveData(); // Save to localStorage
+                if (isSharePointEnabled) {
+                    await saveToSharePoint();
+                }
+            }, SHAREPOINT_CONFIG.autoSaveDelay);
+        }
+
+        // Initialize SharePoint connection on load
+        async function initializeSharePoint() {
+            const statusEl = document.getElementById('sharePointStatus');
+            
+            const available = await checkSharePointAvailability();
+            
+            if (available) {
+                // Auto-enable if backend is available
+                await enableSharePoint();
+            } else {
+                statusEl.textContent = '';
+            }
+        }
+
+        // ==================== END SHAREPOINT INTEGRATION ====================
+
         function loadData() {
             const saved = localStorage.getItem('kpiData');
             if (saved) {
@@ -718,9 +929,13 @@
             localStorage.setItem('kpiData', JSON.stringify({ quarters, scores }));
         }
 
-        function saveAllData() {
+        async function saveAllData() {
             saveData();
-            showToast('✅ Data saved successfully!');
+            if (isSharePointEnabled) {
+                await saveToSharePoint();
+            } else {
+                showToast('✅ Data saved locally!');
+            }
         }
 
         function getColor(value, metric) {
@@ -915,6 +1130,7 @@
                 }
                 
                 saveData();
+                scheduleAutoSave(); // Auto-save to SharePoint after 2 seconds
                 renderTable();
             };
 
@@ -1015,12 +1231,12 @@
                     const colors = {
                         'Flex': '#3b82f6',
                         'Jabil': '#10b981',
-                        'Fabrinet': '#f59e0b'
+                        'Fabrinet': '#9333ea'
                     };
                     const lightColors = {
                         'Flex': '#93c5fd',
                         'Jabil': '#6ee7b7',
-                        'Fabrinet': '#fcd34d'
+                        'Fabrinet': '#c084fc'
                     };
                     
                     // Check if this CM is Fabrinet Interconnect (always single line)
@@ -1039,6 +1255,59 @@
                             boardsData.push(numValue);
                         });
                         
+                        // Detect significant decrease in current (last) quarter for Boards
+                        const boardsPointColors = [];
+                        const boardsPointSizes = [];
+                        const boardsPointStyles = [];
+                        const lastIndex = boardsData.length - 1;
+                        
+                        for (let i = 0; i < boardsData.length; i++) {
+                            if (i === lastIndex && i > 0 && boardsData[i] !== null && boardsData[i-1] !== null) {
+                                const currentValue = boardsData[i];
+                                const previousValue = boardsData[i-1];
+                                const changePercent = ((currentValue - previousValue) / previousValue) * 100;
+                                const changeAbsolute = Math.abs(currentValue - previousValue);
+                                const minThreshold = parseFloat(metric.min) || 0;
+                                const targetThreshold = parseFloat(metric.target) || 0;
+                                const stretchThreshold = parseFloat(metric.stretch) || 0;
+                                
+                                // Check if there's a significant drop (>10% OR >1 point)
+                                if (changePercent < -10 || changeAbsolute > 1) {
+                                    // Red: dropped into Min range (below Target)
+                                    if (currentValue < targetThreshold) {
+                                        boardsPointColors.push('#ef4444'); // Red (Min range)
+                                        boardsPointSizes.push(6);
+                                        boardsPointStyles.push('rectRot');
+                                    }
+                                    // Orange: dropped from Stretch to Target range
+                                    else if (previousValue >= stretchThreshold && currentValue >= targetThreshold && currentValue < stretchThreshold) {
+                                        boardsPointColors.push('#f59e0b'); // Orange (Target range)
+                                        boardsPointSizes.push(6);
+                                        boardsPointStyles.push('rectRot');
+                                    }
+                                    // Orange: significant drop while in Target range
+                                    else if (currentValue >= targetThreshold && currentValue < stretchThreshold) {
+                                        boardsPointColors.push('#f59e0b'); // Orange (Target range)
+                                        boardsPointSizes.push(6);
+                                        boardsPointStyles.push('rectRot');
+                                    }
+                                    else {
+                                        boardsPointColors.push(colors[cmName]);
+                                        boardsPointSizes.push(4);
+                                        boardsPointStyles.push('circle');
+                                    }
+                                } else {
+                                    boardsPointColors.push(colors[cmName]);
+                                    boardsPointSizes.push(4);
+                                    boardsPointStyles.push('circle');
+                                }
+                            } else {
+                                boardsPointColors.push(colors[cmName]);
+                                boardsPointSizes.push(4);
+                                boardsPointStyles.push('circle');
+                            }
+                        }
+                        
                         datasets.push({
                             label: 'Boards',
                             data: boardsData,
@@ -1046,7 +1315,10 @@
                             backgroundColor: colors[cmName] + '20',
                             borderWidth: 2.5,
                             tension: 0.3,
-                            pointRadius: 4,
+                            pointRadius: boardsPointSizes,
+                            pointBackgroundColor: boardsPointColors,
+                            pointBorderColor: boardsPointColors,
+                            pointStyle: boardsPointStyles,
                             pointHoverRadius: 6,
                             borderDash: []
                         });
@@ -1061,6 +1333,59 @@
                             systemsData.push(numValue);
                         });
                         
+                        // Detect significant decrease in current (last) quarter for Systems
+                        const systemsPointColors = [];
+                        const systemsPointSizes = [];
+                        const systemsPointStyles = [];
+                        const lastIndexSys = systemsData.length - 1;
+                        
+                        for (let i = 0; i < systemsData.length; i++) {
+                            if (i === lastIndexSys && i > 0 && systemsData[i] !== null && systemsData[i-1] !== null) {
+                                const currentValue = systemsData[i];
+                                const previousValue = systemsData[i-1];
+                                const changePercent = ((currentValue - previousValue) / previousValue) * 100;
+                                const changeAbsolute = Math.abs(currentValue - previousValue);
+                                const minThreshold = parseFloat(metric.min) || 0;
+                                const targetThreshold = parseFloat(metric.target) || 0;
+                                const stretchThreshold = parseFloat(metric.stretch) || 0;
+                                
+                                // Check if there's a significant drop (>10% OR >1 point)
+                                if (changePercent < -10 || changeAbsolute > 1) {
+                                    // Red: dropped into Min range (below Target)
+                                    if (currentValue < targetThreshold) {
+                                        systemsPointColors.push('#ef4444'); // Red (Min range)
+                                        systemsPointSizes.push(6);
+                                        systemsPointStyles.push('rectRot');
+                                    }
+                                    // Orange: dropped from Stretch to Target range
+                                    else if (previousValue >= stretchThreshold && currentValue >= targetThreshold && currentValue < stretchThreshold) {
+                                        systemsPointColors.push('#f59e0b'); // Orange (Target range)
+                                        systemsPointSizes.push(6);
+                                        systemsPointStyles.push('rectRot');
+                                    }
+                                    // Orange: significant drop while in Target range
+                                    else if (currentValue >= targetThreshold && currentValue < stretchThreshold) {
+                                        systemsPointColors.push('#f59e0b'); // Orange (Target range)
+                                        systemsPointSizes.push(6);
+                                        systemsPointStyles.push('rectRot');
+                                    }
+                                    else {
+                                        systemsPointColors.push(lightColors[cmName]);
+                                        systemsPointSizes.push(4);
+                                        systemsPointStyles.push('circle');
+                                    }
+                                } else {
+                                    systemsPointColors.push(lightColors[cmName]);
+                                    systemsPointSizes.push(4);
+                                    systemsPointStyles.push('circle');
+                                }
+                            } else {
+                                systemsPointColors.push(lightColors[cmName]);
+                                systemsPointSizes.push(4);
+                                systemsPointStyles.push('circle');
+                            }
+                        }
+                        
                         datasets.push({
                             label: 'Systems',
                             data: systemsData,
@@ -1068,7 +1393,10 @@
                             backgroundColor: lightColors[cmName] + '20',
                             borderWidth: 2.5,
                             tension: 0.3,
-                            pointRadius: 4,
+                            pointRadius: systemsPointSizes,
+                            pointBackgroundColor: systemsPointColors,
+                            pointBorderColor: systemsPointColors,
+                            pointStyle: systemsPointStyles,
                             pointHoverRadius: 6,
                             borderDash: [5, 5]
                         });
@@ -1083,6 +1411,59 @@
                             data.push(numValue);
                         });
                         
+                        // Detect significant decrease in current (last) quarter for single line
+                        const pointColors = [];
+                        const pointSizes = [];
+                        const pointStyles = [];
+                        const lastIndexSingle = data.length - 1;
+                        
+                        for (let i = 0; i < data.length; i++) {
+                            if (i === lastIndexSingle && i > 0 && data[i] !== null && data[i-1] !== null) {
+                                const currentValue = data[i];
+                                const previousValue = data[i-1];
+                                const changePercent = ((currentValue - previousValue) / previousValue) * 100;
+                                const changeAbsolute = Math.abs(currentValue - previousValue);
+                                const minThreshold = parseFloat(metric.min) || 0;
+                                const targetThreshold = parseFloat(metric.target) || 0;
+                                const stretchThreshold = parseFloat(metric.stretch) || 0;
+                                
+                                // Check if there's a significant drop (>10% OR >1 point)
+                                if (changePercent < -10 || changeAbsolute > 1) {
+                                    // Red: dropped into Min range (below Target)
+                                    if (currentValue < targetThreshold) {
+                                        pointColors.push('#ef4444'); // Red (Min range)
+                                        pointSizes.push(6);
+                                        pointStyles.push('rectRot');
+                                    }
+                                    // Orange: dropped from Stretch to Target range
+                                    else if (previousValue >= stretchThreshold && currentValue >= targetThreshold && currentValue < stretchThreshold) {
+                                        pointColors.push('#f59e0b'); // Orange (Target range)
+                                        pointSizes.push(6);
+                                        pointStyles.push('rectRot');
+                                    }
+                                    // Orange: significant drop while in Target range
+                                    else if (currentValue >= targetThreshold && currentValue < stretchThreshold) {
+                                        pointColors.push('#f59e0b'); // Orange (Target range)
+                                        pointSizes.push(6);
+                                        pointStyles.push('rectRot');
+                                    }
+                                    else {
+                                        pointColors.push(colors[cmName]);
+                                        pointSizes.push(4);
+                                        pointStyles.push('circle');
+                                    }
+                                } else {
+                                    pointColors.push(colors[cmName]);
+                                    pointSizes.push(4);
+                                    pointStyles.push('circle');
+                                }
+                            } else {
+                                pointColors.push(colors[cmName]);
+                                pointSizes.push(4);
+                                pointStyles.push('circle');
+                            }
+                        }
+                        
                         datasets.push({
                             label: cmName,
                             data: data,
@@ -1090,7 +1471,10 @@
                             backgroundColor: colors[cmName] + '20',
                             borderWidth: 2.5,
                             tension: 0.3,
-                            pointRadius: 4,
+                            pointRadius: pointSizes,
+                            pointBackgroundColor: pointColors,
+                            pointBorderColor: pointColors,
+                            pointStyle: pointStyles,
                             pointHoverRadius: 6
                         });
                     }
@@ -1144,6 +1528,32 @@
                                         if (context.parsed.y !== null) {
                                             label += context.parsed.y.toFixed(1);
                                             if (metric.unit === '%') label += '%';
+                                            
+                                            // Show change from previous quarter
+                                            const dataIndex = context.dataIndex;
+                                            const lastIndex = context.dataset.data.length - 1;
+                                            if (dataIndex > 0) {
+                                                const prevValue = context.dataset.data[dataIndex - 1];
+                                                const currValue = context.parsed.y;
+                                                if (prevValue !== null && currValue !== null) {
+                                                    const changePercent = ((currValue - prevValue) / prevValue) * 100;
+                                                    const changeAbsolute = Math.abs(currValue - prevValue);
+                                                    const minThreshold = parseFloat(metric.min) || 0;
+                                                    const targetThreshold = parseFloat(metric.target) || 0;
+                                                    const stretchThreshold = parseFloat(metric.stretch) || 0;
+                                                    
+                                                    // Only show warning for current quarter
+                                                    if (dataIndex === lastIndex && (changePercent < -10 || changeAbsolute > 1)) {
+                                                        if (currValue < targetThreshold) {
+                                                            label += ' 🔻 (' + changePercent.toFixed(1) + '% / ' + changeAbsolute.toFixed(1) + 'pt drop - Min Range)';
+                                                        } else if (currValue >= targetThreshold && currValue < stretchThreshold) {
+                                                            label += ' 🔻 (' + changePercent.toFixed(1) + '% / ' + changeAbsolute.toFixed(1) + 'pt drop - Target Range)';
+                                                        }
+                                                    } else if (changePercent !== 0) {
+                                                        label += ' (' + (changePercent > 0 ? '+' : '') + changePercent.toFixed(1) + '%)';
+                                                    }
+                                                }
+                                            }
                                         }
                                         return label;
                                     }
@@ -1329,6 +1739,9 @@
         loadData();
         migrateProcurementData();
         renderTable();
+        
+        // Initialize SharePoint connection
+        initializeSharePoint();
         
         // Clear the production migration flag on first load to restore data
         if (localStorage.getItem('productionMigrated') === 'true') {
