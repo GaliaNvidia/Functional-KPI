@@ -4,13 +4,1766 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Functional KPI Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+            min-height: 100vh;
+            padding: 20px 10px;
+        }
+
+        .container {
+            max-width: 98%;
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #76B900 0%, #5a8f00 100%);
+            color: white;
+            padding: 30px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .legend {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            background: #fafafa;
+            padding: 18px 30px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .legend-title {
+            font-size: 12px;
+            font-weight: 700;
+            margin-right: 15px;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .legend-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            margin-right: 8px;
+        }
+
+        .legend-bar {
+            width: 60px;
+            height: 18px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .legend-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        .color-red { background-color: #ef4444; }
+        .color-yellow { background-color: #fbbf24; }
+        .color-green { background-color: #76B900; }
+
+        .controls {
+            padding: 20px 20px;
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #76B900 0%, #5a8f00 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(118, 185, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(118, 185, 0, 0.4);
+        }
+
+        .btn-success {
+            background: #9ca3af;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #6b7280;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(156, 163, 175, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            background: #fafafa;
+            border: 1px solid #f0f0f0;
+            opacity: 0.7;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+
+        .btn-sm:hover {
+            background: #f5f5f5;
+            opacity: 1;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .table-section {
+            margin-bottom: 50px;
+        }
+
+        .table-section-title {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 15px 50px;
+            margin: 0;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .table-container {
+            padding: 20px 20px 30px 20px;
+            overflow-x: auto;
+            background: #fafafa;
+        }
+
+        .kpi-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .kpi-table th {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            color: white;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 12px;
+            border: none;
+            border-bottom: 2px solid #76B900;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-table td {
+            padding: 12px 8px;
+            border: none;
+            border-bottom: 1px solid #f3f4f6;
+            text-align: center;
+            font-size: 13px;
+            background: white;
+        }
+
+        .kpi-table tbody tr:hover {
+            background: #f9fafb;
+            transform: scale(1.001);
+            transition: all 0.2s ease;
+        }
+
+        .metric-cell {
+            text-align: left !important;
+            min-width: 180px;
+        }
+
+        .metric-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .metric-details {
+            list-style: none;
+            padding-left: 10px;
+        }
+
+        .metric-details li {
+            color: #6b7280;
+            font-size: 12px;
+            margin: 3px 0;
+        }
+
+        .metric-details li:before {
+            content: "▸ ";
+            color: #76B900;
+            font-weight: bold;
+        }
+
+        .score-cell {
+            padding: 8px !important;
+            min-width: 100px;
+        }
+
+        .cm-score {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 4px;
+            margin: 2px 0;
+            transition: all 0.2s ease;
+        }
+
+        .score-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+            width: 50px;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .score-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0.9;
+        }
+
+        .score-input {
+            border: 2px solid #76B900;
+            border-radius: 4px;
+            padding: 4px 8px;
+            text-align: center;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .threshold-cell {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #6b7280;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #76B900;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            min-width: 400px;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #76B900;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .index-cell {
+            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+            color: #374151;
+            font-weight: 600;
+            width: 50px;
+            font-size: 14px;
+        }
+
+        .trend-cell {
+            text-align: center;
+            min-width: 180px;
+            padding: 15px !important;
+        }
+
+        .trend-canvas {
+            max-width: 250px;
+            max-height: 120px;
+        }
+
+        .file-input {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <div id="root"></div>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script type="text/babel" src="app.js"></script>
+    <div class="container">
+        <div class="header">
+            <h1>Functional KPI Dashboard</h1>
+        </div>
+
+        <div class="legend">
+            <span class="legend-title">Functional Measures</span>
+            <div class="legend-item">
+                <div class="legend-bar color-red"></div>
+                <span class="legend-label">Min</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-bar color-yellow"></div>
+                <span class="legend-label">Target</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-bar color-green"></div>
+                <span class="legend-label">Stretch</span>
+            </div>
+            <div style="margin-left: 30px; padding-left: 30px; border-left: 1px solid #e5e7eb; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 11px; color: #6b7280; font-weight: 500;">Current Quarter Drop (>10% or >1pt):</span>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="width: 8px; height: 8px; background: #ef4444; transform: rotate(45deg); display: inline-block;"></span>
+                    <span style="font-size: 11px; color: #4b5563; font-weight: 500;">= Min Range</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="width: 8px; height: 8px; background: #f59e0b; transform: rotate(45deg); display: inline-block;"></span>
+                    <span style="font-size: 11px; color: #4b5563; font-weight: 500;">= Target Range</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-sm" onclick="saveAllData()">💾 Save Data</button>
+            <button class="btn btn-sm" id="sharePointBtn" onclick="enableSharePoint()" style="background: #0078d4; color: white;">🔗 Connect to SharePoint</button>
+            <span id="sharePointStatus" style="font-size: 11px; color: #9ca3af; margin-left: 10px;"></span>
+            
+            <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+                <span style="font-size: 11px; color: #9ca3af; font-weight: 500;">Production KPIs:</span>
+                <button class="btn btn-sm" onclick="downloadCSVTemplate('Production KPIs')" title="Download Production KPIs Template">📥</button>
+                <button class="btn btn-sm" onclick="triggerUpload('Production KPIs')" title="Upload Production KPIs Data">📤</button>
+                
+                <span style="font-size: 11px; color: #9ca3af; font-weight: 500; margin-left: 15px;">Procurement KPI:</span>
+                <button class="btn btn-sm" onclick="downloadCSVTemplate('Procurement KPI')" title="Download Procurement KPI Template">📥</button>
+                <button class="btn btn-sm" onclick="triggerUpload('Procurement KPI')" title="Upload Procurement KPI Data">📤</button>
+            </div>
+        </div>
+
+        <!-- Production KPIs Table -->
+        <div class="table-section">
+            <h2 class="table-section-title">Production KPIs</h2>
+            <div class="table-container">
+                <table class="kpi-table" id="productionTable">
+                    <thead>
+                        <tr>
+                            <th class="index-cell">#</th>
+                            <th>Metrics (Measures)</th>
+                            <th class="quarter-header">Q4FY25</th>
+                            <th class="quarter-header">Q1FY26</th>
+                            <th class="quarter-header">Q2FY26</th>
+                            <th class="quarter-header">Q3Y26</th>
+                            <th>Min/Target/Stretch</th>
+                            <th>Flex Trend</th>
+                            <th>Jabil Trend</th>
+                            <th>Fabrinet Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productionBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Procurement KPI Table -->
+        <div class="table-section">
+            <h2 class="table-section-title">Procurement KPI</h2>
+            <div class="table-container">
+                <table class="kpi-table" id="procurementTable">
+                    <thead>
+                        <tr>
+                            <th class="index-cell">#</th>
+                            <th>Metrics (Measures)</th>
+                            <th class="quarter-header procurement-quarter">Q3FY25</th>
+                            <th class="quarter-header procurement-quarter">Q4FY25</th>
+                            <th class="quarter-header procurement-quarter">Q1FY26</th>
+                            <th class="quarter-header procurement-quarter">Q2FY26</th>
+                            <th class="quarter-header procurement-quarter">Q3Y26</th>
+                            <th>Min/Target/Stretch</th>
+                            <th>Flex Trend</th>
+                            <th>Jabil Trend</th>
+                            <th>Fabrinet Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody id="procurementBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2>Add New Quarter</h2>
+            <div class="form-group">
+                <label for="quarterInput">Quarter Name (e.g., Q4FY25):</label>
+                <input type="text" id="quarterInput" placeholder="Q4FY25">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideAddQuarterModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="addQuarter()">Add Quarter</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <input type="file" id="uploadProductionKPIs" class="file-input" accept=".csv" onchange="handleFileUpload(event, 'Production KPIs')">
+    <input type="file" id="uploadProcurementKPI" class="file-input" accept=".csv" onchange="handleFileUpload(event, 'Procurement KPI')">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        const CMS = ["Flex", "Jabil", "Fabrinet"];
+        let chartInstances = {};
+
+        const METRICS = [
+            {
+                id: 1,
+                category: "Production KPIs",
+                name: "% of On Time Delivery MP",
+                cms: ["Flex", "Jabil", "Fabrinet"],
+                min: 98, target: 100, stretch: 100, unit: "%",
+                slides: ["OTD MP- Flex", "OTD MP- Jabil", "OTD MP-Fabrinet"]
+            },
+            {
+                id: 2,
+                category: "Production KPIs",
+                name: "% of On Time Delivery - STD RW",
+                cms: ["Flex", "Jabil", "Fabrinet"],
+                min: 98, target: 100, stretch: 100, unit: "%",
+                slides: ["OTD STD RW - Flex", "OTD STD RW - Jabil", "OTD STD RW - Fabrinet"]
+            },
+            {
+                id: 3,
+                category: "Production KPIs",
+                name: "% of Reschedule (Push out) performance in MP",
+                cms: ["Flex Boards, Flex SYS+SW", "Jabil Boards, Jabil SYS+SW", "Fabrinet Interconnect"],
+                min: 3, target: 5, stretch: 5, unit: "",
+                slides: ["RSOD- Flex", "RSOD-Jabil", "RSOD-Fabrinet"]
+            },
+            {
+                id: 4,
+                category: "Procurement KPI",
+                name: "Inventory/E&O Reporting and Liability Mitigation",
+                cms: ["Flex Boards, Flex SYS+SW", "Jabil Boards, Jabil SYS+SW", "Fabrinet Interconnect"],
+                min: 4, target: 5, stretch: 5, unit: "",
+                slides: ["Inventory-Flex", "Inventory-Jabil", "Inventory-Fabrinet"]
+            },
+            {
+                id: 5,
+                category: "Procurement KPI",
+                name: "Procurement Analytics",
+                cms: ["Flex Boards, Flex SYS+SW", "Jabil Boards, Jabil SYS+SW", "Fabrinet Interconnect"],
+                min: 4, target: 5, stretch: 5, unit: "",
+                slides: ["Analytics-Flex", "Analytics-Jabil", "Analytics-Fabrinet"]
+            },
+            {
+                id: 6,
+                category: "Procurement KPI",
+                name: "Materials Escalation & LT Alignment",
+                cms: ["Flex Boards, Flex SYS+SW", "Jabil Boards, Jabil SYS+SW", "Fabrinet Interconnect"],
+                min: 4, target: 5, stretch: 5, unit: "",
+                slides: ["Materials-Flex", "Materials-Jabil", "Materials-Fabrinet"]
+            },
+            {
+                id: 7,
+                category: "Procurement KPI",
+                name: "Component PO TAT/Commit Performance",
+                cms: ["Flex Boards, Flex SYS+SW", "Jabil Boards, Jabil SYS+SW", "Fabrinet Interconnect"],
+                min: 4, target: 5, stretch: 5, unit: "",
+                slides: ["PO TAT-Flex", "PO TAT-Jabil", "PO TAT-Fabrinet"]
+            },
+            {
+                id: 8,
+                category: "Procurement KPI",
+                name: "New Product Launch Readiness",
+                cms: ["Flex Boards, Flex SYS+SW", "Jabil Boards, Jabil SYS+SW", "Fabrinet Interconnect"],
+                min: 4, target: 5, stretch: 5, unit: "",
+                slides: ["NPL-Flex", "NPL-Jabil", "NPL-Fabrinet"]
+            },
+            {
+                id: 9,
+                category: "Procurement KPI",
+                name: "CM Material Audit",
+                cms: ["Flex", "Jabil", "Fabrinet Interconnect"],
+                min: 98, target: 100, stretch: 100, unit: "%",
+                slides: ["Material audit-Flex", "Material audit-Jabil", "Material audit-Fabrinet"]
+            }
+        ];
+
+        let quarters = ['Q4FY25', 'Q1FY26', 'Q2FY26', 'Q3Y26'];
+        let procurementQuarters = ['Q3FY25', 'Q4FY25', 'Q1FY26', 'Q2FY26', 'Q3Y26'];
+        let scores = {
+            // Metric 1 - On Time Delivery MP
+            '1-Q4FY25-Flex': '99.52', '1-Q4FY25-Jabil': '99.98', '1-Q4FY25-Fabrinet': '100',
+            '1-Q1FY26-Flex': '99.16', '1-Q1FY26-Jabil': '99.99', '1-Q1FY26-Fabrinet': '93.38',
+            '1-Q2FY26-Flex': '99.38', '1-Q2FY26-Jabil': '99.87', '1-Q2FY26-Fabrinet': '97.10',
+            // Metric 2 - On Time Delivery STD RW
+            '2-Q4FY25-Flex': '100', '2-Q4FY25-Jabil': '100', '2-Q4FY25-Fabrinet': '100',
+            '2-Q1FY26-Flex': '100', '2-Q1FY26-Jabil': '100', '2-Q1FY26-Fabrinet': '96.30',
+            '2-Q2FY26-Flex': '100', '2-Q2FY26-Jabil': '100', '2-Q2FY26-Fabrinet': '100',
+            // Metric 3 - Reschedule
+            '3-Q4FY25-Flex': '3.8,4.5', '3-Q4FY25-Jabil': '4.4,5.0', '3-Q4FY25-Fabrinet': '5.0',
+            '3-Q1FY26-Flex': '4.5,4.8', '3-Q1FY26-Jabil': '5.0,4.9', '3-Q1FY26-Fabrinet': '3.54',
+            '3-Q2FY26-Flex': '3.85,4.2', '3-Q2FY26-Jabil': '5.0,4.7', '3-Q2FY26-Fabrinet': '4.85',
+        };
+
+        // ==================== SHAREPOINT MCP INTEGRATION ====================
+        
+        // SharePoint Configuration
+        const SHAREPOINT_CONFIG = {
+            siteUrl: 'https://nvidia.sharepoint.com/sites/QBRmanagement/',
+            fileName: 'KPI_Dashboard_Data.csv',
+            fileUrl: 'https://nvidia.sharepoint.com/sites/QBRmanagement/Shared%20Documents/KPI_Dashboard_Data.csv',
+            autoSaveDelay: 2000 // Auto-save 2 seconds after last change
+        };
+
+        let autoSaveTimeout = null;
+        let isSharePointEnabled = false;
+        let sharePointAvailable = false;
+
+        // Check if SharePoint MCP backend is available
+        async function checkSharePointAvailability() {
+            try {
+                const response = await fetch('/api/sharepoint/health', { method: 'GET' });
+                sharePointAvailable = response.ok;
+                return sharePointAvailable;
+            } catch (error) {
+                console.log('SharePoint backend not available, using local storage only');
+                sharePointAvailable = false;
+                return false;
+            }
+        }
+
+        // Enable SharePoint sync
+        async function enableSharePoint() {
+            const statusEl = document.getElementById('sharePointStatus');
+            const btnEl = document.getElementById('sharePointBtn');
+            
+            statusEl.textContent = '⏳ Connecting...';
+            
+            const available = await checkSharePointAvailability();
+            
+            if (available) {
+                isSharePointEnabled = true;
+                statusEl.textContent = '✅ Connected';
+                statusEl.style.color = '#10b981';
+                btnEl.style.display = 'none';
+                showToast('✅ Connected to SharePoint!');
+                await loadFromSharePoint();
+            } else {
+                statusEl.textContent = '⚠️ Backend not available';
+                statusEl.style.color = '#f59e0b';
+                showToast('⚠️ SharePoint backend not running. Using local storage.');
+            }
+        }
+
+        // Save data to SharePoint via MCP backend
+        async function saveToSharePoint() {
+            if (!isSharePointEnabled || !sharePointAvailable) return;
+
+            try {
+                const csvData = prepareCSVData();
+                
+                const response = await fetch('/api/sharepoint/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fileUrl: SHAREPOINT_CONFIG.fileUrl,
+                        content: csvData
+                    })
+                });
+
+                if (response.ok) {
+                    console.log('✅ Data saved to SharePoint');
+                    showToast('💾 Saved to SharePoint');
+                } else {
+                    throw new Error('Save failed');
+                }
+            } catch (error) {
+                console.error('❌ SharePoint save failed:', error);
+                showToast('⚠️ SharePoint save failed. Data saved locally.');
+            }
+        }
+
+        // Load data from SharePoint via MCP backend
+        async function loadFromSharePoint() {
+            if (!isSharePointEnabled || !sharePointAvailable) return false;
+
+            try {
+                const response = await fetch('/api/sharepoint/load', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fileUrl: SHAREPOINT_CONFIG.fileUrl
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.content) {
+                        parseCSVData(data.content);
+                        console.log('✅ Data loaded from SharePoint');
+                        showToast('📥 Loaded from SharePoint');
+                        renderTable();
+                        return true;
+                    }
+                }
+            } catch (error) {
+                console.error('❌ SharePoint load failed:', error);
+                showToast('⚠️ Loading from SharePoint failed. Using local data.');
+            }
+            return false;
+        }
+
+        // Prepare data as CSV for SharePoint
+        function prepareCSVData() {
+            let csv = 'Category,Metric,CM,CM Description';
+            const quarters_all = [...new Set([...quarters, ...procurementQuarters])];
+            quarters_all.forEach(q => csv += `,${q}`);
+            csv += '\n';
+            
+            METRICS.forEach(metric => {
+                const categoryQuarters = metric.category === 'Procurement KPI' ? procurementQuarters : quarters;
+                
+                metric.cms.forEach((cmDescription, idx) => {
+                    const cmName = CMS[idx];
+                    csv += `"${metric.category}","${metric.name}","${cmName}","${cmDescription}"`;
+                    
+                    quarters_all.forEach(quarter => {
+                        const key = `${metric.id}-${quarter}-${cmName}`;
+                        const value = scores[key] || '';
+                        csv += `,"${value}"`;
+                    });
+                    
+                    csv += '\n';
+                });
+            });
+            
+            return csv;
+        }
+
+        // Parse CSV data from SharePoint
+        function parseCSVData(csvContent) {
+            const lines = csvContent.split('\n');
+            const headers = lines[0].split(',');
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                
+                const values = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                if (!values || values.length < 4) continue;
+                
+                const metricName = values[1].replace(/"/g, '');
+                const cmName = values[2].replace(/"/g, '');
+                
+                const metric = METRICS.find(m => m.name === metricName);
+                if (!metric) continue;
+                
+                for (let j = 4; j < values.length && j < headers.length; j++) {
+                    const quarter = headers[j].trim();
+                    const value = values[j].replace(/"/g, '').trim();
+                    if (value) {
+                        const key = `${metric.id}-${quarter}-${cmName}`;
+                        scores[key] = value;
+                    }
+                }
+            }
+        }
+
+        // Schedule auto-save
+        function scheduleAutoSave() {
+            if (autoSaveTimeout) {
+                clearTimeout(autoSaveTimeout);
+            }
+            
+            autoSaveTimeout = setTimeout(async () => {
+                saveData(); // Save to localStorage
+                if (isSharePointEnabled) {
+                    await saveToSharePoint();
+                }
+            }, SHAREPOINT_CONFIG.autoSaveDelay);
+        }
+
+        // Initialize SharePoint connection on load
+        async function initializeSharePoint() {
+            const statusEl = document.getElementById('sharePointStatus');
+            
+            const available = await checkSharePointAvailability();
+            
+            if (available) {
+                // Auto-enable if backend is available
+                await enableSharePoint();
+            } else {
+                statusEl.textContent = '';
+            }
+        }
+
+        // ==================== END SHAREPOINT INTEGRATION ====================
+
+        function loadData() {
+            const saved = localStorage.getItem('kpiData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                quarters = data.quarters;
+                scores = data.scores;
+            }
+        }
+
+        // Migration function to shift Procurement KPI data back by one quarter
+        function migrateProcurementData(force = false) {
+            const migrated = localStorage.getItem('procurementMigrated');
+            if (migrated === 'true' && !force) {
+                console.log('Procurement migration already completed. Skipping...');
+                return;
+            }
+
+            console.log('🔄 Starting Procurement KPI data migration...');
+            const procurementMetrics = [4, 5, 6, 7, 8, 9];
+            const oldQuarters = ['Q4FY25', 'Q1FY26', 'Q2FY26', 'Q3Y26'];
+            const newQuarters = ['Q3FY25', 'Q4FY25', 'Q1FY26', 'Q2FY26'];
+            
+            const newScores = {};
+            let migratedCount = 0;
+            
+            // Copy all non-Procurement scores unchanged
+            Object.keys(scores).forEach(key => {
+                const metricId = parseInt(key.split('-')[0]);
+                if (!procurementMetrics.includes(metricId)) {
+                    newScores[key] = scores[key];
+                }
+            });
+            
+            // Shift Procurement KPI data
+            procurementMetrics.forEach(metricId => {
+                CMS.forEach(cm => {
+                    for (let i = 0; i < oldQuarters.length; i++) {
+                        const oldKey = `${metricId}-${oldQuarters[i]}-${cm}`;
+                        const newKey = `${metricId}-${newQuarters[i]}-${cm}`;
+                        
+                        if (scores[oldKey]) {
+                            newScores[newKey] = scores[oldKey];
+                            console.log(`   Migrating Procurement: ${oldKey} → ${newKey} = ${scores[oldKey]}`);
+                            migratedCount++;
+                        }
+                    }
+                });
+            });
+            
+            scores = newScores;
+            saveData();
+            localStorage.setItem('procurementMigrated', 'true');
+            console.log(`✅ Procurement KPI data migration complete! Migrated ${migratedCount} entries.`);
+        }
+
+        // Migration function to remove Q4FY25 from Production KPIs
+        function migrateProductionData(force = false) {
+            const migrated = localStorage.getItem('productionMigrated');
+            if (migrated === 'true' && !force) {
+                console.log('Production migration already completed. Skipping...');
+                return;
+            }
+
+            console.log('🔄 Starting Production KPI data migration (removing Q4FY25)...');
+            const productionMetrics = [1, 2, 3];
+            const keepQuarters = ['Q1FY26', 'Q2FY26', 'Q3Y26'];
+            
+            const newScores = {};
+            let removedCount = 0;
+            let keptCount = 0;
+            
+            // Copy all scores
+            Object.keys(scores).forEach(key => {
+                const parts = key.split('-');
+                const metricId = parseInt(parts[0]);
+                const quarter = parts[1];
+                
+                if (productionMetrics.includes(metricId)) {
+                    // For Production KPIs, only keep the new quarters
+                    if (keepQuarters.includes(quarter)) {
+                        newScores[key] = scores[key];
+                        keptCount++;
+                    } else {
+                        console.log(`   Removing: ${key}`);
+                        removedCount++;
+                    }
+                } else {
+                    // Keep all other data unchanged
+                    newScores[key] = scores[key];
+                }
+            });
+            
+            scores = newScores;
+            saveData();
+            localStorage.setItem('productionMigrated', 'true');
+            console.log(`✅ Production KPI migration complete! Removed ${removedCount} Q4FY25 entries, kept ${keptCount} entries.`);
+        }
+
+        function saveData() {
+            localStorage.setItem('kpiData', JSON.stringify({ quarters, scores }));
+        }
+
+        async function saveAllData() {
+            saveData();
+            if (isSharePointEnabled) {
+                await saveToSharePoint();
+            } else {
+                showToast('✅ Data saved locally!');
+            }
+        }
+
+        function getColor(value, metric) {
+            if (!value || value === '') return 'transparent';
+            const cleanValue = String(value).replace('%', '');
+            const numValue = parseFloat(cleanValue);
+            if (isNaN(numValue)) return 'transparent';
+
+            const { min, target } = metric;
+
+            if (metric.unit === '%') {
+                if (numValue < min) return '#ef4444';
+                if (numValue < target) return '#fbbf24';
+                return '#76B900';
+            } else {
+                if (numValue < min) return '#ef4444';
+                if (numValue < target) return '#fbbf24';
+                return '#76B900';
+            }
+        }
+
+        function renderTable() {
+            const productionBody = document.getElementById('productionBody');
+            const procurementBody = document.getElementById('procurementBody');
+            productionBody.innerHTML = '';
+            procurementBody.innerHTML = '';
+
+            METRICS.forEach(metric => {
+                const tbody = metric.category === 'Production KPIs' ? productionBody : procurementBody;
+                const categoryQuarters = metric.category === 'Procurement KPI' ? procurementQuarters : quarters;
+                const row = document.createElement('tr');
+                
+                // Index cell
+                const indexCell = document.createElement('td');
+                indexCell.className = 'index-cell';
+                indexCell.textContent = metric.id;
+                row.appendChild(indexCell);
+
+                // Metric cell
+                const metricCell = document.createElement('td');
+                metricCell.className = 'metric-cell';
+                metricCell.innerHTML = `
+                    <div class="metric-name">${metric.name}</div>
+                    <ul class="metric-details">
+                        ${metric.cms.map(d => `<li>${d}</li>`).join('')}
+                    </ul>
+                `;
+                row.appendChild(metricCell);
+
+                // Quarter cells
+                categoryQuarters.forEach(quarter => {
+                    const cell = document.createElement('td');
+                    cell.className = 'score-cell';
+                    
+                    metric.cms.forEach((cm, cmIdx) => {
+                        const cmName = CMS[cmIdx];
+                        const key = `${metric.id}-${quarter}-${cmName}`;
+                        const value = scores[key] || '';
+                        
+                        const cmScore = document.createElement('div');
+                        cmScore.className = 'cm-score';
+                        
+                        const singleNumberMetrics = [1, 2, 9];
+                        const isSingleNumber = singleNumberMetrics.includes(metric.id) || cm.includes('Fabrinet Interconnect');
+                        
+                        if (isSingleNumber) {
+                            let cleanValue = value;
+                            if (value && value.includes(',')) {
+                                cleanValue = value.split(',')[0].trim();
+                            }
+                            
+                            const scoreBox = document.createElement('div');
+                            scoreBox.className = 'score-box';
+                            scoreBox.style.backgroundColor = cleanValue ? getColor(cleanValue, metric) : 'transparent';
+                            let displayValue = cleanValue;
+                            if (displayValue && metric.unit === '%') {
+                                displayValue = displayValue.replace('%', '') + '%';
+                            }
+                            scoreBox.textContent = displayValue || '';
+                            scoreBox.onclick = (e) => {
+                                e.stopPropagation();
+                                editSingleBox(metric.id, quarter, cmName, scoreBox, metric, 0);
+                            };
+                            cmScore.appendChild(scoreBox);
+                        } else {
+                            const values = value ? value.split(',').map(v => v.trim()) : ['', ''];
+                            
+                            for (let i = 0; i < 2; i++) {
+                                const scoreBox = document.createElement('div');
+                                scoreBox.className = 'score-box';
+                                const boxValue = values[i] || '';
+                                scoreBox.style.backgroundColor = boxValue ? getColor(boxValue, metric) : 'transparent';
+                                scoreBox.textContent = boxValue;
+                                scoreBox.onclick = (e) => {
+                                    e.stopPropagation();
+                                    editSingleBox(metric.id, quarter, cmName, scoreBox, metric, i);
+                                };
+                                cmScore.appendChild(scoreBox);
+                            }
+                        }
+                        
+                        cell.appendChild(cmScore);
+                    });
+                    
+                    row.appendChild(cell);
+                });
+
+                // Threshold cell
+                const thresholdCell = document.createElement('td');
+                thresholdCell.className = 'threshold-cell';
+                thresholdCell.textContent = `${metric.min}/${metric.target}/${metric.stretch}`;
+                row.appendChild(thresholdCell);
+
+                // Trend cells - one per CM (Flex, Jabil, Fabrinet)
+                CMS.forEach(cmName => {
+                    const trendCell = document.createElement('td');
+                    trendCell.className = 'trend-cell';
+                    const canvasId = `chart-${metric.id}-${cmName}`;
+                    trendCell.innerHTML = `<canvas id="${canvasId}" class="trend-canvas"></canvas>`;
+                    row.appendChild(trendCell);
+                });
+
+                tbody.appendChild(row);
+            });
+
+            createTrendCharts();
+
+            // Update header quarters for both tables
+            const productionHeaders = document.querySelectorAll('#productionTable .quarter-header');
+            productionHeaders.forEach((header, idx) => {
+                if (idx < quarters.length) {
+                    header.textContent = quarters[idx];
+                }
+            });
+
+            const procurementHeaders = document.querySelectorAll('#procurementTable .quarter-header');
+            procurementHeaders.forEach((header, idx) => {
+                if (idx < procurementQuarters.length) {
+                    header.textContent = procurementQuarters[idx];
+                }
+            });
+        }
+
+        function editSingleBox(metricId, quarter, cmName, scoreBox, metric, boxIndex) {
+            const key = `${metricId}-${quarter}-${cmName}`;
+            const currentValue = scores[key] || '';
+            
+            const singleNumberMetrics = [1, 2, 9];
+            const isSingleNumber = singleNumberMetrics.includes(metricId) || cmName === 'Fabrinet';
+            
+            let values;
+            if (isSingleNumber) {
+                const cleanValue = currentValue.includes(',') ? currentValue.split(',')[0].trim() : currentValue;
+                values = [cleanValue, ''];
+            } else {
+                values = currentValue ? currentValue.split(',').map(v => v.trim()) : ['', ''];
+            }
+            const boxValue = values[boxIndex] || '';
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'score-input';
+            input.value = boxValue.replace('%', '');
+            input.style.width = '45px';
+            input.style.padding = '4px';
+            input.style.fontSize = '13px';
+            input.placeholder = '0';
+            
+            scoreBox.textContent = '';
+            scoreBox.appendChild(input);
+            input.focus();
+            input.select();
+
+            const saveValue = () => {
+                let value = input.value.trim();
+                
+                value = value.replace('%', '');
+                
+                if (value && metric.unit === '%') {
+                    const numValue = parseFloat(value);
+                    if (!isNaN(numValue) && numValue > 0 && numValue < 1) {
+                        value = (numValue * 100).toString();
+                    }
+                }
+                
+                values[boxIndex] = value;
+                
+                if (isSingleNumber) {
+                    scores[key] = values[0] || '';
+                } else {
+                    scores[key] = values.join(',');
+                }
+                
+                saveData();
+                scheduleAutoSave(); // Auto-save to SharePoint after 2 seconds
+                renderTable();
+            };
+
+            input.onblur = saveValue;
+
+            input.onkeypress = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    input.blur();
+                }
+            };
+        }
+
+        function showAddQuarterModal() {
+            document.getElementById('modalOverlay').classList.add('active');
+            document.getElementById('quarterInput').value = '';
+            document.getElementById('quarterInput').focus();
+        }
+
+        function hideAddQuarterModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+        function addQuarter() {
+            const input = document.getElementById('quarterInput');
+            const newQuarter = input.value.trim();
+            
+            if (newQuarter) {
+                quarters.push(newQuarter);
+                saveData();
+                renderTable();
+                hideAddQuarterModal();
+                showToast(`✨ Quarter ${newQuarter} added successfully!`);
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function copyTableToClipboard() {
+            showToast('Table copied to clipboard! Ready to paste into your presentation.');
+        }
+
+        function exportToCSV() {
+            let csv = 'Metric,CM,' + quarters.join(',') + ',Min/Target/Stretch\n';
+            
+            METRICS.forEach(metric => {
+                CMS.forEach(cm => {
+                    csv += `"${metric.name}",${cm},`;
+                    quarters.forEach(quarter => {
+                        const key = `${metric.id}-${quarter}-${cm}`;
+                        csv += `${scores[key] || ''},`;
+                    });
+                    csv += `${metric.min}/${metric.target}/${metric.stretch}\n`;
+                });
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'kpi-data.csv';
+            a.click();
+            showToast('Data exported to CSV!');
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                scores = {};
+                quarters = [];
+                saveData();
+                renderTable();
+                showToast('All data cleared!');
+            }
+        }
+
+        function createTrendCharts() {
+            Object.values(chartInstances).forEach(chart => chart.destroy());
+            chartInstances = {};
+
+            METRICS.forEach(metric => {
+                const categoryQuarters = metric.category === 'Procurement KPI' ? procurementQuarters : quarters;
+                const hasTwoLines = metric.id >= 3 && metric.id <= 8;
+
+                // Create 3 separate charts - one for each CM
+                CMS.forEach((cmName, cmIdx) => {
+                    const canvasId = `chart-${metric.id}-${cmName}`;
+                    const canvas = document.getElementById(canvasId);
+                    if (!canvas) return;
+
+                    const ctx = canvas.getContext('2d');
+                    
+                    const datasets = [];
+                    const colors = {
+                        'Flex': '#3b82f6',
+                        'Jabil': '#10b981',
+                        'Fabrinet': '#9333ea'
+                    };
+                    const lightColors = {
+                        'Flex': '#93c5fd',
+                        'Jabil': '#6ee7b7',
+                        'Fabrinet': '#c084fc'
+                    };
+                    
+                    // Check if this CM is Fabrinet Interconnect (always single line)
+                    const cmDescription = metric.cms[cmIdx];
+                    const isFabrinetInterconnect = cmDescription.includes('Fabrinet Interconnect');
+                    
+                    if (hasTwoLines && !isFabrinetInterconnect) {
+                        // Two product lines: Boards and Systems
+                        // Boards line
+                        const boardsData = [];
+                        categoryQuarters.forEach(quarter => {
+                            const key = `${metric.id}-${quarter}-${cmName}`;
+                            const value = scores[key] || '';
+                            const values = value ? value.split(',').map(v => v.trim()) : [];
+                            const numValue = values[0] ? parseFloat(values[0].replace('%', '')) : null;
+                            boardsData.push(numValue);
+                        });
+                        
+                        // Detect significant decrease in current (last) quarter for Boards
+                        const boardsPointColors = [];
+                        const boardsPointSizes = [];
+                        const boardsPointStyles = [];
+                        const lastIndex = boardsData.length - 1;
+                        
+                        for (let i = 0; i < boardsData.length; i++) {
+                            if (i === lastIndex && i > 0 && boardsData[i] !== null && boardsData[i-1] !== null) {
+                                const currentValue = boardsData[i];
+                                const previousValue = boardsData[i-1];
+                                const changePercent = ((currentValue - previousValue) / previousValue) * 100;
+                                const changeAbsolute = Math.abs(currentValue - previousValue);
+                                const minThreshold = parseFloat(metric.min) || 0;
+                                const targetThreshold = parseFloat(metric.target) || 0;
+                                const stretchThreshold = parseFloat(metric.stretch) || 0;
+                                
+                                // Check if there's a significant drop (>10% OR >1 point)
+                                if (changePercent < -10 || changeAbsolute > 1) {
+                                    // Red: dropped into Min range (below Target)
+                                    if (currentValue < targetThreshold) {
+                                        boardsPointColors.push('#ef4444'); // Red (Min range)
+                                        boardsPointSizes.push(6);
+                                        boardsPointStyles.push('rectRot');
+                                    }
+                                    // Orange: dropped from Stretch to Target range
+                                    else if (previousValue >= stretchThreshold && currentValue >= targetThreshold && currentValue < stretchThreshold) {
+                                        boardsPointColors.push('#f59e0b'); // Orange (Target range)
+                                        boardsPointSizes.push(6);
+                                        boardsPointStyles.push('rectRot');
+                                    }
+                                    // Orange: significant drop while in Target range
+                                    else if (currentValue >= targetThreshold && currentValue < stretchThreshold) {
+                                        boardsPointColors.push('#f59e0b'); // Orange (Target range)
+                                        boardsPointSizes.push(6);
+                                        boardsPointStyles.push('rectRot');
+                                    }
+                                    else {
+                                        boardsPointColors.push(colors[cmName]);
+                                        boardsPointSizes.push(4);
+                                        boardsPointStyles.push('circle');
+                                    }
+                                } else {
+                                    boardsPointColors.push(colors[cmName]);
+                                    boardsPointSizes.push(4);
+                                    boardsPointStyles.push('circle');
+                                }
+                            } else {
+                                boardsPointColors.push(colors[cmName]);
+                                boardsPointSizes.push(4);
+                                boardsPointStyles.push('circle');
+                            }
+                        }
+                        
+                        datasets.push({
+                            label: 'Boards',
+                            data: boardsData,
+                            borderColor: colors[cmName],
+                            backgroundColor: colors[cmName] + '20',
+                            borderWidth: 2.5,
+                            tension: 0.3,
+                            pointRadius: boardsPointSizes,
+                            pointBackgroundColor: boardsPointColors,
+                            pointBorderColor: boardsPointColors,
+                            pointStyle: boardsPointStyles,
+                            pointHoverRadius: 6,
+                            borderDash: []
+                        });
+                        
+                        // Systems line
+                        const systemsData = [];
+                        categoryQuarters.forEach(quarter => {
+                            const key = `${metric.id}-${quarter}-${cmName}`;
+                            const value = scores[key] || '';
+                            const values = value ? value.split(',').map(v => v.trim()) : [];
+                            const numValue = values[1] ? parseFloat(values[1].replace('%', '')) : null;
+                            systemsData.push(numValue);
+                        });
+                        
+                        // Detect significant decrease in current (last) quarter for Systems
+                        const systemsPointColors = [];
+                        const systemsPointSizes = [];
+                        const systemsPointStyles = [];
+                        const lastIndexSys = systemsData.length - 1;
+                        
+                        for (let i = 0; i < systemsData.length; i++) {
+                            if (i === lastIndexSys && i > 0 && systemsData[i] !== null && systemsData[i-1] !== null) {
+                                const currentValue = systemsData[i];
+                                const previousValue = systemsData[i-1];
+                                const changePercent = ((currentValue - previousValue) / previousValue) * 100;
+                                const changeAbsolute = Math.abs(currentValue - previousValue);
+                                const minThreshold = parseFloat(metric.min) || 0;
+                                const targetThreshold = parseFloat(metric.target) || 0;
+                                const stretchThreshold = parseFloat(metric.stretch) || 0;
+                                
+                                // Check if there's a significant drop (>10% OR >1 point)
+                                if (changePercent < -10 || changeAbsolute > 1) {
+                                    // Red: dropped into Min range (below Target)
+                                    if (currentValue < targetThreshold) {
+                                        systemsPointColors.push('#ef4444'); // Red (Min range)
+                                        systemsPointSizes.push(6);
+                                        systemsPointStyles.push('rectRot');
+                                    }
+                                    // Orange: dropped from Stretch to Target range
+                                    else if (previousValue >= stretchThreshold && currentValue >= targetThreshold && currentValue < stretchThreshold) {
+                                        systemsPointColors.push('#f59e0b'); // Orange (Target range)
+                                        systemsPointSizes.push(6);
+                                        systemsPointStyles.push('rectRot');
+                                    }
+                                    // Orange: significant drop while in Target range
+                                    else if (currentValue >= targetThreshold && currentValue < stretchThreshold) {
+                                        systemsPointColors.push('#f59e0b'); // Orange (Target range)
+                                        systemsPointSizes.push(6);
+                                        systemsPointStyles.push('rectRot');
+                                    }
+                                    else {
+                                        systemsPointColors.push(lightColors[cmName]);
+                                        systemsPointSizes.push(4);
+                                        systemsPointStyles.push('circle');
+                                    }
+                                } else {
+                                    systemsPointColors.push(lightColors[cmName]);
+                                    systemsPointSizes.push(4);
+                                    systemsPointStyles.push('circle');
+                                }
+                            } else {
+                                systemsPointColors.push(lightColors[cmName]);
+                                systemsPointSizes.push(4);
+                                systemsPointStyles.push('circle');
+                            }
+                        }
+                        
+                        datasets.push({
+                            label: 'Systems',
+                            data: systemsData,
+                            borderColor: lightColors[cmName],
+                            backgroundColor: lightColors[cmName] + '20',
+                            borderWidth: 2.5,
+                            tension: 0.3,
+                            pointRadius: systemsPointSizes,
+                            pointBackgroundColor: systemsPointColors,
+                            pointBorderColor: systemsPointColors,
+                            pointStyle: systemsPointStyles,
+                            pointHoverRadius: 6,
+                            borderDash: [5, 5]
+                        });
+                    } else {
+                        // Single product line
+                        const data = [];
+                        categoryQuarters.forEach(quarter => {
+                            const key = `${metric.id}-${quarter}-${cmName}`;
+                            const value = scores[key] || '';
+                            const cleanValue = value ? value.split(',')[0].trim().replace('%', '') : '';
+                            const numValue = cleanValue ? parseFloat(cleanValue) : null;
+                            data.push(numValue);
+                        });
+                        
+                        // Detect significant decrease in current (last) quarter for single line
+                        const pointColors = [];
+                        const pointSizes = [];
+                        const pointStyles = [];
+                        const lastIndexSingle = data.length - 1;
+                        
+                        for (let i = 0; i < data.length; i++) {
+                            if (i === lastIndexSingle && i > 0 && data[i] !== null && data[i-1] !== null) {
+                                const currentValue = data[i];
+                                const previousValue = data[i-1];
+                                const changePercent = ((currentValue - previousValue) / previousValue) * 100;
+                                const changeAbsolute = Math.abs(currentValue - previousValue);
+                                const minThreshold = parseFloat(metric.min) || 0;
+                                const targetThreshold = parseFloat(metric.target) || 0;
+                                const stretchThreshold = parseFloat(metric.stretch) || 0;
+                                
+                                // Check if there's a significant drop (>10% OR >1 point)
+                                if (changePercent < -10 || changeAbsolute > 1) {
+                                    // Red: dropped into Min range (below Target)
+                                    if (currentValue < targetThreshold) {
+                                        pointColors.push('#ef4444'); // Red (Min range)
+                                        pointSizes.push(6);
+                                        pointStyles.push('rectRot');
+                                    }
+                                    // Orange: dropped from Stretch to Target range
+                                    else if (previousValue >= stretchThreshold && currentValue >= targetThreshold && currentValue < stretchThreshold) {
+                                        pointColors.push('#f59e0b'); // Orange (Target range)
+                                        pointSizes.push(6);
+                                        pointStyles.push('rectRot');
+                                    }
+                                    // Orange: significant drop while in Target range
+                                    else if (currentValue >= targetThreshold && currentValue < stretchThreshold) {
+                                        pointColors.push('#f59e0b'); // Orange (Target range)
+                                        pointSizes.push(6);
+                                        pointStyles.push('rectRot');
+                                    }
+                                    else {
+                                        pointColors.push(colors[cmName]);
+                                        pointSizes.push(4);
+                                        pointStyles.push('circle');
+                                    }
+                                } else {
+                                    pointColors.push(colors[cmName]);
+                                    pointSizes.push(4);
+                                    pointStyles.push('circle');
+                                }
+                            } else {
+                                pointColors.push(colors[cmName]);
+                                pointSizes.push(4);
+                                pointStyles.push('circle');
+                            }
+                        }
+                        
+                        datasets.push({
+                            label: cmName,
+                            data: data,
+                            borderColor: colors[cmName],
+                            backgroundColor: colors[cmName] + '20',
+                            borderWidth: 2.5,
+                            tension: 0.3,
+                            pointRadius: pointSizes,
+                            pointBackgroundColor: pointColors,
+                            pointBorderColor: pointColors,
+                            pointStyle: pointStyles,
+                            pointHoverRadius: 6
+                        });
+                    }
+
+                    const chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: categoryQuarters,
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            aspectRatio: hasTwoLines ? 1.8 : 2.5,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'bottom',
+                                    labels: {
+                                        font: { size: 9, weight: '500' },
+                                        boxWidth: 12,
+                                        padding: 6,
+                                        usePointStyle: true,
+                                        generateLabels: function(chart) {
+                                            return chart.data.datasets.map((dataset, i) => ({
+                                                text: dataset.label,
+                                                fillStyle: dataset.borderColor,
+                                                strokeStyle: dataset.borderColor,
+                                                lineWidth: dataset.borderWidth,
+                                                hidden: !chart.isDatasetVisible(i),
+                                                index: i,
+                                                lineDash: dataset.borderDash || []
+                                            }));
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    enabled: true,
+                                    mode: 'index',
+                                    intersect: false,
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleFont: { size: 11, weight: 'bold' },
+                                    bodyFont: { size: 10 },
+                                    padding: 10,
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += context.parsed.y.toFixed(1);
+                                            if (metric.unit === '%') label += '%';
+                                            
+                                            // Show change from previous quarter
+                                            const dataIndex = context.dataIndex;
+                                            const lastIndex = context.dataset.data.length - 1;
+                                            if (dataIndex > 0) {
+                                                const prevValue = context.dataset.data[dataIndex - 1];
+                                                const currValue = context.parsed.y;
+                                                if (prevValue !== null && currValue !== null) {
+                                                    const changePercent = ((currValue - prevValue) / prevValue) * 100;
+                                                    const changeAbsolute = Math.abs(currValue - prevValue);
+                                                    const minThreshold = parseFloat(metric.min) || 0;
+                                                    const targetThreshold = parseFloat(metric.target) || 0;
+                                                    const stretchThreshold = parseFloat(metric.stretch) || 0;
+                                                    
+                                                    // Only show warning for current quarter
+                                                    if (dataIndex === lastIndex && (changePercent < -10 || changeAbsolute > 1)) {
+                                                        if (currValue < targetThreshold) {
+                                                            label += ' 🔻 (' + changePercent.toFixed(1) + '% / ' + changeAbsolute.toFixed(1) + 'pt drop - Min Range)';
+                                                        } else if (currValue >= targetThreshold && currValue < stretchThreshold) {
+                                                            label += ' 🔻 (' + changePercent.toFixed(1) + '% / ' + changeAbsolute.toFixed(1) + 'pt drop - Target Range)';
+                                                        }
+                                                    } else if (changePercent !== 0) {
+                                                        label += ' (' + (changePercent > 0 ? '+' : '') + changePercent.toFixed(1) + '%)';
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        return label;
+                                    }
+                                }
+                                }
+                            },
+                            scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: { 
+                                    font: { size: 9 },
+                                    callback: function(value) {
+                                        return value.toFixed(1) + (metric.unit === '%' ? '%' : '');
+                                    }
+                                },
+                                grid: { display: true, color: 'rgba(0, 0, 0, 0.05)' },
+                                title: {
+                                    display: false
+                                }
+                            },
+                                x: {
+                                    ticks: { font: { size: 9, weight: '500' } },
+                                    grid: { display: false }
+                                }
+                            },
+                            interaction: {
+                                mode: 'nearest',
+                                axis: 'x',
+                                intersect: false
+                            }
+                        }
+                    });
+                    
+                    chartInstances[canvasId] = chart;
+                });
+            });
+        }
+
+        function triggerUpload(category) {
+            const inputId = category === 'Production KPIs' ? 'uploadProductionKPIs' : 'uploadProcurementKPI';
+            document.getElementById(inputId).click();
+        }
+
+        function handleFileUpload(event, category) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                const lines = text.split('\n');
+                let updatedCount = 0;
+
+                // Parse header to understand column structure
+                const headerLine = lines[0].trim();
+                const headers = headerLine.split(',');
+                
+                // Find quarter columns (format: "Q1FY26-Boards", "Q1FY26-Systems")
+                const quarterColumns = [];
+                const categoryQuarters = category === 'Procurement KPI' ? procurementQuarters : quarters;
+                
+                categoryQuarters.forEach(quarter => {
+                    const boardsIdx = headers.findIndex(h => h === `${quarter}-Boards`);
+                    const systemsIdx = headers.findIndex(h => h === `${quarter}-Systems`);
+                    quarterColumns.push({
+                        quarter: quarter,
+                        boardsIdx: boardsIdx,
+                        systemsIdx: systemsIdx
+                    });
+                });
+
+                // Process data rows
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+
+                    const parts = line.split(',');
+                    if (parts.length < 3) continue;
+
+                    const metricName = parts[0].replace(/"/g, '').trim();
+                    const cmName = parts[1].replace(/"/g, '').trim();
+
+                    const metric = METRICS.find(m => 
+                        m.name === metricName && m.category === category
+                    );
+                    if (!metric) continue;
+
+                    const cm = CMS.find(c => cmName.includes(c));
+                    if (!cm) continue;
+
+                    // Determine if this metric/CM should have single or double values
+                    const singleNumberMetrics = [1, 2, 9];
+                    const isFabrinetInterconnect = cmName.includes('Fabrinet Interconnect');
+                    const isSingleNumber = singleNumberMetrics.includes(metric.id) || isFabrinetInterconnect;
+
+                    // Process each quarter
+                    quarterColumns.forEach(qCol => {
+                        const boardsValue = qCol.boardsIdx >= 0 ? parts[qCol.boardsIdx]?.trim() : '';
+                        const systemsValue = qCol.systemsIdx >= 0 ? parts[qCol.systemsIdx]?.trim() : '';
+                        
+                        const key = `${metric.id}-${qCol.quarter}-${cm}`;
+                        
+                        if (isSingleNumber) {
+                            // Single number: use only Boards column
+                            if (boardsValue) {
+                                scores[key] = boardsValue;
+                                updatedCount++;
+                            }
+                        } else {
+                            // Two numbers: combine Boards and Systems
+                            if (boardsValue || systemsValue) {
+                                scores[key] = `${boardsValue || ''},${systemsValue || ''}`;
+                                updatedCount++;
+                            }
+                        }
+                    });
+                }
+
+                if (updatedCount > 0) {
+                    saveData();
+                    renderTable();
+                    showToast(`✅ Successfully uploaded ${updatedCount} scores for ${category}!`);
+                } else {
+                    alert('No matching data found in CSV. Please check the format.');
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        function downloadCSVTemplate(category) {
+            const categoryMetrics = METRICS.filter(m => m.category === category);
+            const categoryQuarters = category === 'Procurement KPI' ? procurementQuarters : quarters;
+            
+            // Build header with separate columns for Boards and Systems
+            let header = 'Metric,CM';
+            categoryQuarters.forEach(quarter => {
+                header += `,${quarter}-Boards,${quarter}-Systems`;
+            });
+            header += ',Min/Target/Stretch\n';
+            
+            let csv = header;
+            
+            categoryMetrics.forEach(metric => {
+                const singleNumberMetrics = [1, 2, 9];
+                const isSingleNumberMetric = singleNumberMetrics.includes(metric.id);
+                
+                metric.cms.forEach((cmName, cmIdx) => {
+                    const cm = CMS[cmIdx];
+                    const isFabrinetInterconnect = cmName.includes('Fabrinet Interconnect');
+                    const isSingleNumber = isSingleNumberMetric || isFabrinetInterconnect;
+                    
+                    csv += `"${metric.name}","${cmName}",`;
+                    
+                    categoryQuarters.forEach(quarter => {
+                        const key = `${metric.id}-${quarter}-${cm}`;
+                        const value = scores[key] || '';
+                        
+                        if (isSingleNumber) {
+                            // Single number: put in first column, leave second empty
+                            csv += `${value},`;
+                        } else {
+                            // Two numbers: split by comma
+                            const values = value ? value.split(',') : ['', ''];
+                            csv += `${values[0] || ''},${values[1] || ''}`;
+                        }
+                        csv += ',';
+                    });
+                    
+                    csv += `${metric.min}/${metric.target}/${metric.stretch}\n`;
+                });
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${category.replace(/\s+/g, '_')}_template.csv`;
+            a.click();
+            showToast(`📥 Template downloaded for ${category}!`);
+        }
+
+        loadData();
+        migrateProcurementData();
+        renderTable();
+        
+        // Initialize SharePoint connection
+        initializeSharePoint();
+        
+        // Clear the production migration flag on first load to restore data
+        if (localStorage.getItem('productionMigrated') === 'true') {
+            localStorage.removeItem('productionMigrated');
+            console.log('⚠️ Production migration flag cleared. Please refresh your browser to restore data.');
+        }
+
+        document.getElementById('quarterInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addQuarter();
+        });
+
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'modalOverlay') hideAddQuarterModal();
+        });
+
+        // Make force migration available in console for debugging
+        window.forceMigration = function() {
+            localStorage.removeItem('procurementMigrated');
+            migrateProcurementData(true);
+            renderTable();
+            alert('Migration forced! Check console for details.');
+        };
+    </script>
 </body>
 </html>

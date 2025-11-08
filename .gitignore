@@ -1,11 +1,16 @@
+# Local data folder
+data secure/
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
 # OS files
 .DS_Store
 Thumbs.db
 
-# Editor directories
+# IDE files
 .vscode/
 .idea/
-
-# Temporary files
-*.tmp
-*.log
