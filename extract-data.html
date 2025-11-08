@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extract KPI Data</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #76B900;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #76B900;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #5a8f00;
+        }
+        .info {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .data-preview {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success {
+            background: #4caf50;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💾 Extract KPI Dashboard Data</h1>
+        
+        <div class="info">
+            <strong>Purpose:</strong> This tool extracts any data stored in your browser's localStorage and allows you to download it.
+        </div>
+
+        <button onclick="checkData()">🔍 Check for Saved Data</button>
+        <button onclick="downloadJSON()">📥 Download as JSON</button>
+        <button onclick="downloadCSV()">📊 Download as CSV</button>
+        
+        <div id="success" class="success"></div>
+        
+        <h3>Data Preview:</h3>
+        <div id="preview" class="data-preview">No data found yet. Click "Check for Saved Data".</div>
+    </div>
+
+    <script>
+        let kpiData = null;
+
+        function checkData() {
+            const localData = localStorage.getItem('kpiData');
+            const preview = document.getElementById('preview');
+            
+            if (localData) {
+                try {
+                    kpiData = JSON.parse(localData);
+                    preview.textContent = JSON.stringify(kpiData, null, 2);
+                    showSuccess('✅ Found saved data! (' + JSON.stringify(kpiData).length + ' characters)');
+                } catch (e) {
+                    preview.textContent = 'Error parsing data: ' + e.message;
+                }
+            } else {
+                preview.textContent = '❌ No data found in localStorage.\n\nMake sure you:\n1. Opened the KPI Dashboard first\n2. Entered some data\n3. The data was saved to localStorage';
+            }
+        }
+
+        function downloadJSON() {
+            if (!kpiData) {
+                alert('Please check for data first!');
+                return;
+            }
+
+            const dataStr = JSON.stringify(kpiData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'kpi-data-backup-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showSuccess('✅ JSON file downloaded!');
+        }
+
+        function downloadCSV() {
+            if (!kpiData) {
+                alert('Please check for data first!');
+                return;
+            }
+
+            // Convert JSON to CSV
+            let csv = 'Category,Metric,CM,Product Line,Min,Target,Stretch';
+            
+            // Add quarter columns
+            if (kpiData.length > 0 && kpiData[0].metrics && kpiData[0].metrics.length > 0) {
+                const quarters = Object.keys(kpiData[0].metrics[0].quarters || {});
+                quarters.forEach(q => csv += ',' + q);
+            }
+            csv += '\n';
+
+            // Add data rows
+            kpiData.forEach(category => {
+                category.metrics.forEach(metric => {
+                    csv += `"${category.name}","${metric.name}","${metric.cm || ''}","${metric.productLine || ''}",${metric.min},${metric.target},${metric.stretch}`;
+                    
+                    Object.values(metric.quarters || {}).forEach(q => {
+                        csv += ',' + (q.score || '');
+                    });
+                    csv += '\n';
+                });
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'kpi-data-backup-' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showSuccess('✅ CSV file downloaded! You can open it in Excel.');
+        }
+
+        function showSuccess(message) {
+            const success = document.getElementById('success');
+            success.textContent = message;
+            success.style.display = 'block';
+            setTimeout(() => {
+                success.style.display = 'none';
+            }, 3000);
+        }
+
+        // Auto-check on load
+        window.onload = checkData;
+    </script>
+</body>
+</html>
+
