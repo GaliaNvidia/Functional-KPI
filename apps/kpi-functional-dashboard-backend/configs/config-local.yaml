@@ -1,0 +1,207 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023-2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# =============================================================================
+# LOCAL DEVELOPMENT CONFIGURATION
+# =============================================================================
+# This configuration file is optimized for local development:
+# - SQLite database (lightweight, file-based)
+# - ChromaDB vector store (local, no external dependencies)
+#
+# Use this for:
+# - Local testing and development
+# - Quick iterations and prototyping
+# - When you don't have access to production infrastructure
+#
+# For production deployments, use config-prod.yaml instead.
+# =============================================================================
+
+general:
+  use_uvloop: true
+  # telemetry:
+  #   logging:
+  #     console:
+  #       _type: console
+  #       level: INFO
+  #   tracing:
+  #     otelcollector:
+  #       _type: otelcollector
+  #       endpoint: "http://otel-datadog-collector.opentelemetry-operator.svc.cluster.local:4318/v1/traces"
+  #       project: nat-react-agent-blueprint
+
+# MCP Client Configuration for MaaS Servers
+# NAT can connect to multiple MaaS MCP servers simultaneously
+function_groups:
+  maas_mcp_tool:
+    _type: mcp_client
+    server:
+      transport: streamable-http
+      url: ${NATSP_REACT_MCP_SERVER_URL}
+      auth_provider: maas_mcp_tool_auth
+
+# OAuth2 Authentication for MCP Tools
+# Each MaaS server requires OAuth2 authentication
+# On first use, a browser window will open for authentication
+# Credentials are cached for subsequent uses
+authentication:
+  maas_mcp_tool_auth:
+    _type: mcp_oauth2
+    server_url: ${NATSP_REACT_MCP_SERVER_URL}
+    redirect_uri: ${NATSP_REACT_MCP_REDIRECT_URI}
+    default_user_id: ${NATSP_REACT_MCP_USER_ID}
+    allow_default_user_id_for_tool_calls: ${NATSP_REACT_MCP_ALLOW_DEFAULT_USER}
+
+llms:
+  sql_llm:
+    _type: openai
+    base_url: https://datarobot.prd.astra.nvidia.com/api/v2/deployments/68798894866a1e8ad3e158c9
+    model_name: "meta/llama-3.3-70b-instruct"
+    api_key: ${NATSP_REACT_DATAROBOT_API_KEY}
+  # If using build.nvidia.com endpoints:
+  # sql_llm:
+  #   _type: nim
+  #   model_name: "meta/llama-3.1-405b-instruct"
+  #   api_key: ${NATSP_REACT_NVIDIA_API_KEY}
+
+  react_llm:
+    _type: openai
+    base_url: https://datarobot.prd.astra.nvidia.com/api/v2/deployments/68798894866a1e8ad3e158c9
+    model_name: "meta/llama-3.3-70b-instruct"
+    api_key: ${NATSP_REACT_DATAROBOT_API_KEY}
+  # If using build.nvidia.com endpoints:
+  # react_llm:
+  #   _type: nim
+  #   model_name: "qwen/qwen2.5-coder-32b-instruct"
+  #   api_key: ${NATSP_REACT_NVIDIA_API_KEY}    
+
+embedders:
+  # OpenAI/Datarobot Example:
+  vanna_embedder:
+    _type: openai
+    base_url: https://datarobot.prd.astra.nvidia.com/api/v2/deployments/68e6ff85c63910195e38ceec/directAccess/nim/v1
+    model_name: "nvidia/llama-3.2-nv-embedqa-1b-v2"
+    api_key: ${NATSP_REACT_DATAROBOT_API_KEY}
+  #
+  # build.nvidia.com Example:
+  # vanna_embedder:
+  #   _type: nim
+  #   model_name: "nvidia/llama3.2-nv-embedqa-1b-v2"
+  #   api_key: ${NATSP_REACT_NVIDIA_API_KEY}
+
+functions:
+  sql_retriever:
+    _type: generate_sql_query_and_retrieve_tool
+    llm_name: sql_llm
+    embedding_name: vanna_embedder
+    
+    # SQLite Configuration (Local Development)
+    sqlite_db_path: "database/northwind.db"
+    
+    # ChromaDB Vector Store (Local Development)
+    vector_store_path: "database"
+    use_milvus: false  # Use local ChromaDB
+    
+    # Output Configuration
+    output_folder: "output_data"
+    vanna_training_data_path: "vanna_sqlite_training_data.yaml"
+
+  eci_search:
+    _type: eci_search_tool
+    environment: "prod"
+    output_folder: "output_data"
+    eci_client_id: ${NATSP_REACT_ECI_CLIENT_ID}
+    eci_client_secret: ${NATSP_REACT_ECI_CLIENT_SECRET}
+
+workflow:
+  _type: react_agent
+  llm_name: react_llm
+  max_iterations: 5
+  max_retries: 2
+  tool_names: [
+    sql_retriever,
+    eci_search,
+    maas_mcp_tool
+  ]
+  parse_agent_response_max_retries: 2
+  system_prompt: |
+    You are a conversational agent showcasing an agentic workflow with three tools: 
+    1) A SQL retrieval tool for the Northwind database
+    2) An Enterprise Content Intelligence (ECI) search tool for NVIDIA internal content
+    3) A MaaS MCP tool for accessing enterprise tools (Jira, GitLab, Confluence, etc.)
+    
+    - Be concise, helpful, and conversational.
+    - Choose the right tool when needed; otherwise answer directly.
+    - For questions on Northwind or database analytics, use SQL retrieval tool and summarize results clearly.
+      If the tool saves results to a JSON file, you MUST include the full absolute JSON file path (as printed by the tool) verbatim in your response.
+    - For questions on internal docs/policies/search or anything related to NVIDIA, use ECI search tool and return the markdown table provided by the tool.
+      If the tool saves results to a JSON file, you MUST include the full absolute JSON file path (as printed by the tool) verbatim in your response.
+    - For questions about Jira, GitLab, Confluence, or other MaaS services, use the maas_mcp_tool.
+    - Do not use markdown while calling the tools use the tool name as it is.
+
+    Available tools: {tool_names}
+    {tools}
+
+    Respond in one of two formats (always surface any JSON file paths exactly as shown by the tool):
+    - Tool plan:
+      Question: <original question>
+      Thought: <your reasoning>
+      Action: <one of [{tool_names}]>
+      Action Input: <input>
+      Observation: <will be provided>
+    - Final answer:
+      Thought: I now know the final answer
+      Final Answer: <answer with any filenames or links>
+
+    User question: {question}
+
+eval:
+  general:
+    output_dir: eval_output
+    dataset:
+      _type: json
+      file_path: eval_data/sample_eval_set.json
+  evaluators:
+    results_json_check:
+      _type: custom_evaluator
+      output_dir: output_data
+      llm_name: react_llm
+      prompt: |
+        You are an expert evaluator for an agentic workflow with two tools: a SQL retrieval tool for the Northwind database and an Enterprise Content Intelligence (ECI) search tool for NVIDIA internal content.
+        Your task is to evaluate how well a generated response (which may include both text and markdown table)
+        matches the reference answer for a given question.
+
+        Question: {question}
+        Reference Answer: {reference_answer}
+        Generated Response: {generated_answer}
+
+        IMPORTANT: You MUST provide your response ONLY as a valid JSON object.
+        Do not include any text before or after the JSON.
+
+        # EVALUATION LOGIC
+        The reference answer can include the actual answer expected or a rough estimate of how it would look like.
+        Your should compare the generated answer with the reference answer and return a score based on how well it resonates with the reference answer.
+        - 1.0: Generated answer fully resonates the reference answer
+        - 0.5: Generated answer partially resonates with some missing/incorrect elements
+        - 0.0: Generated answer does not resonate with the reference answer
+
+        # RESPONSE FORMAT
+        You MUST respond with ONLY this JSON format:
+        {{
+            "score": 0.0,
+            "reasoning": "EVALUATION TYPE: [TEXT or PLOT] - [your analysis and score with justification]"
+        }}
+
+        Replace the score with your actual evaluation (0.0, 0.5, or 1.0).
+

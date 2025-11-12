@@ -1,0 +1,280 @@
+NAT blueprint Cursor Rules (SQL + ECI)
+
+Overview
+- This blueprint demonstrates an agentic workflow using NeMo Agent Toolkit (NAT) with two tools:
+  - SQL retrieval over Northwind DB (`generate_sql_query_and_retrieve_tool`)
+  - Enterprise Content Intelligence search (`eci_search_tool`)
+
+Core Patterns
+- NAT function registration must be an async generator that yields a FunctionInfo:
+  - Do NOT return after registering. Use `yield FunctionInfo.from_fn(...)` and include a small try/finally.
+  - Mirror the pattern used in `generate_sql_query_and_retrieve_tool.py`.
+
+ECI Search Tool Rules
+- Credentials come ONLY from environment variables; never hardcode:
+  - ECI_CLIENT_ID
+  - ECI_CLIENT_SECRET
+  - ECI_SSO_TOKEN (user JWT)
+- Always sanitize env tokens loaded from shell:
+  - Trim whitespace and surrounding quotes before use.
+  - Read the SSO token at call time to avoid staleness.
+- Headers for request to ECI API should include:
+  - Authorization: Bearer <SSA access_token>
+  - Nv-Actor-Token: <sanitized SSO id token>
+  - Nv-Actor-Token-Type: id_token (safe to include)
+  - Content-Type: application/json
+  - Accept: application/json
+- Host and realm must match:
+  - Use prod actor token with prod host; use stg actor token with stg host.
+  - Environment selection uses config.environment; optional `ECI_ENVIRONMENT` env override is supported.
+- Token management:
+  - Fetch SSA via client credentials, cache until near expiry, then refresh.
+  - Never commit tokens; rely on env at runtime.
+- Output contracts:
+  - Return markdown formatted table for frontend rendering (titles are links, include datasource/type/updated/url).
+  - Save the full JSON response to `output_data/eci_search/eci_search_<query>_<timestamp>.json`.
+
+SQL Retrieval Tool Rules
+- Uses `generate_sql_query_and_retrieve_tool` pattern (already implemented):
+  - Generates SQL with Vanna, executes, returns summary.
+  - Saves large/tabular results as `<question>_results.json` under `output_data/` and mentions the filename in the LLM reply.
+
+Workflow / Prompt
+- Keep the prompt concise and tool-oriented:
+  - “You are a conversational agent in a blueprint showcasing an agentic workflow with two tools: SQL retrieval and ECI search …”
+  - Provide two response formats: Tool plan (ReAct-style) and Final answer.
+  - Tell agent to use `sql_retriever` for DB analytics and `eci_search` for NVIDIA internal docs.
+
+Evaluation
+- Mixed SQL/ECI eval supported via generalized evaluator (`sql_json_match_evaluator.py`):
+  - Supports SQL arrays in `output_data/` and ECI saved objects in `output_data/eci_search/`.
+  - Filename regex covers both: `([\w\-]+_results\.json|eci_search_[\w\-]+\.json)`
+  - Default key fields include SQL and ECI: ["ProductName", "CategoryName", "title", "document.title"].
+
+Environment Management
+- Preferred ways to load env:
+  - `source env.sh` (contains `export KEY=VALUE` lines), or
+  - `set -a; source .env; set +a` for KEY=VALUE files.
+- Avoid `export $(cat .env | xargs)` as it can mangle values.
+- When pasting long JWTs, wrap in single quotes to avoid shell interpolation.
+
+Debugging & Logging
+- NAT logging is set to console DEBUG; ECI tool logs:
+  - SSA token fetch start/end, TTL, cached reuse.
+  - Request URL, payload keys, status code, elapsed time, results count.
+  - On 4xx, logs first 200 chars of body plus token length diagnostics (never full secrets).
+
+Security
+- Never commit real tokens or secrets.
+- Keep tokens in env; sanitize before use.
+
+Authoring Checklist (ECI changes)
+1) Read ECI_* from env, sanitize quotes/whitespace.
+2) Use matching environment (prod/stg) for both SSA and actor token.
+3) Set headers: Authorization, Nv-Actor-Token, Nv-Actor-Token-Type, Content-Type, Accept.
+4) Return markdown; save JSON under `output_data/eci_search/`.
+5) Yield FunctionInfo from an async generator.
+# Cursor Rules for NAT blueprint Development
+
+## Project Overview
+This is a NeMo Agent Toolkit (NAT) blueprint that demonstrates SQL query capabilities using Vanna AI. The project serves as a template for building AI agents that can convert natural language to SQL queries and interact with databases.
+
+## Code Style and Standards
+
+### Python Code
+- Use Python 3.11+ features and type hints throughout
+- Follow PEP 8 style guidelines
+- Use async/await patterns for all I/O operations
+- Prefer Pydantic models for data validation and serialization
+- Include comprehensive docstrings for all functions and classes
+- Use descriptive variable names that reflect business domain concepts
+
+### File Organization
+- Keep tool implementations in separate files under `src/nat_blueprint/`
+- Use clear, descriptive filenames that match the tool functionality
+- Maintain the three-step pattern for adding new tools:
+  1. Create tool file with schema and function
+  2. Import in `register.py`
+  3. Add to configuration file
+
+### Configuration Management
+- Use YAML for configuration files in `configs/` directory
+- Follow the existing naming convention: `config-{agent-type}.yml`
+- Keep environment-specific settings separate from core configuration
+- Document all configuration parameters with comments
+
+## NAT-Specific Guidelines
+
+### Tool Development
+- Always define both Config and Input Pydantic models for tools
+- Use AsyncGenerator return type for streaming responses
+- Yield status updates during long-running operations
+- Handle errors gracefully and provide meaningful error messages
+- Follow the established pattern from `generate_sql_query_and_retrieve_tool.py`
+
+### Agent Configuration
+- Use descriptive system prompts that define personality and capabilities
+- Include required template variables: `{tools}`, `{tool_names}`, `{question}`
+- Keep prompts conversational but professional
+- Avoid overly rigid response formatting requirements
+
+### Database Integration
+- Use proper connection management and cleanup
+- Implement proper error handling for SQL operations
+- Log SQL queries and execution times for debugging
+- Validate SQL queries before execution
+
+## Development Workflow
+
+### Adding New Tools
+1. **Create Tool File**: Define in `src/nat_blueprint/new_tool.py`
+   ```python
+   from typing import Any, Dict, AsyncGenerator
+   from pydantic import BaseModel, Field
+
+   class NewToolConfig(BaseModel):
+       # Configuration parameters
+       pass
+
+   class NewToolInput(BaseModel):
+       # Input schema
+       pass
+
+   async def new_tool(config: NewToolConfig, input_data: NewToolInput) -> AsyncGenerator[Dict[str, Any], None]:
+       # Implementation
+       yield {"status": "completed", "data": result}
+   ```
+
+2. **Register Tool**: Add import to `src/nat_blueprint/register.py`
+   ```python
+   from . import new_tool
+   ```
+
+3. **Configure Tool**: Add to `configs/config-react.yml`
+   ```yaml
+   functions:
+     new_tool:
+       _type: new_tool
+       # configuration parameters
+
+   workflow:
+     tool_names: [sql_retriever, new_tool]
+   ```
+
+### Testing
+- Test tools individually before integration
+- Use the provided evaluation framework in `eval_data/`
+- Test with various natural language inputs
+- Verify error handling and edge cases
+- Test configuration changes thoroughly
+
+### Documentation
+- Update README.md when adding significant features
+- Document configuration parameters and their effects
+- Provide example usage for new tools
+- Keep code comments focused on "why" not "what"
+
+## Common Patterns
+
+### Error Handling
+```python
+try:
+    # Operation
+    yield {"status": "processing", "message": "Working..."}
+    result = await some_operation()
+    yield {"status": "completed", "data": result}
+except Exception as e:
+    logger.error(f"Tool failed: {e}")
+    yield {"status": "error", "message": str(e)}
+```
+
+### Logging
+```python
+import logging
+logger = logging.getLogger(__name__)
+
+# Use appropriate log levels
+logger.debug("Detailed debugging information")
+logger.info("General information about operation")
+logger.warning("Something unexpected happened")
+logger.error("An error occurred")
+```
+
+### Configuration Access
+```python
+# Access environment variables with defaults
+import os
+api_key = os.getenv("NVIDIA_API_KEY")
+if not api_key:
+    raise ValueError("NVIDIA_API_KEY environment variable is required")
+```
+
+## Dependencies and Requirements
+
+### Core Dependencies
+- `nvidia-nat`: Core NAT framework
+- `pydantic`: Data validation and serialization
+- `vanna`: SQL generation from natural language
+- `chromadb`: Vector database for embeddings
+
+### Development Dependencies
+- `pytest`: Testing framework
+- `pytest-asyncio`: Async testing support
+
+## Security Considerations
+- Never commit API keys or sensitive credentials
+- Use environment variables for all secrets
+- Validate and sanitize all user inputs
+- Implement proper SQL injection prevention
+- Log security-relevant events appropriately
+
+## Performance Guidelines
+- Use async/await for all I/O operations
+- Implement proper connection pooling for databases
+- Cache expensive operations when appropriate
+- Monitor memory usage with large datasets
+- Use streaming responses for long-running operations
+
+## Debugging Tips
+- Enable DEBUG logging level for detailed information
+- Use the NAT server's built-in logging and monitoring
+- Test tools in isolation before full integration
+- Check configuration file syntax carefully
+- Verify environment variables are set correctly
+
+## Integration with Astra
+- Follow Astra deployment patterns and conventions
+- Use provided Dockerfile and deployment configurations
+- Ensure proper health checks and monitoring endpoints
+- Follow Astra security and compliance requirements
+
+## Contributing Guidelines
+- Follow the established code patterns and conventions
+- Test changes thoroughly before committing
+- Update documentation for any new features
+- Use descriptive commit messages
+- Consider backward compatibility when making changes
+
+## Useful Commands
+```bash
+# Install in development mode
+pip install -e .
+
+# Run the NAT server
+nat serve --config_file=configs/config-react.yml
+
+# Run tests
+pytest
+
+# Check code style
+flake8 src/
+
+# Type checking
+mypy src/
+```
+
+## Resources
+- [NAT Documentation](https://docs.nvidia.com/nemo-agent-toolkit/)
+- [Pydantic Documentation](https://docs.pydantic.dev/)
+- [Vanna AI Documentation](https://vanna.ai/docs/)
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
