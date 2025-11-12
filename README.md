@@ -2,6 +2,12 @@
 
 A clean and visually appealing platform for tracking KPI scores across quarters with automatic color coding.
 
+| latest version | type | description |
+| --- | --- | --- |
+| [![kpi-functional-dashboard-backend](https://gitlab-master.nvidia.com/ape-repo/astra-projects/kpi-dash/-/jobs/artifacts/main/raw/public/badges/app-kpi-functional-dashboard-backend.svg?job=multi_release:finalize)](https://gitlab-master.nvidia.com/ape-repo/astra-projects/kpi-dash/-/jobs/artifacts/main/raw/public/badges/app-kpi-functional-dashboard-backend.svg?job=multi_release:finalize) | [![PyPI](https://img-shield-cloudsre.gcp-int.nvidia.com/badge/PyPI-3775A9?logo=pypi&logoColor=fff)](#) | NAT React Agent Blueprint for Astra |
+
+🛑 This table is automatically generated. Please do not modify it!!!
+
 ## Features
 
 ✨ **Easy Data Entry**: Click any cell to edit scores
@@ -86,4 +92,43 @@ Works in all modern browsers:
 
 ---
 
-**Note**: This is a client-side application with no server backend. All data is stored locally in your browser.
+## 📁 Repository Structure
+
+**`apps/`** - Source code for containerized applications. Each subdirectory represents a separate microservice with its own Dockerfile and dependencies.
+
+## 🚀 CI/CD Pipeline
+
+The GitLab CI pipeline will automatically:
+- Build Docker images for each application in the `apps/` directory
+- Tag images with version numbers
+- Push images to JFrog Artifactory (`artifactory.nvidia.com/continum`)
+- Generate release badges and version tracking
+
+### Image Naming Convention
+
+Images will be published to JFrog with the following naming pattern:
+- `artifactory.nvidia.com/continum/kpi-functional-dashboard:{version}`
+
+Where `{version}` follows semantic versioning (e.g., 1.0.0, 1.0.1, etc.)
+
+## 🔧 Configuration
+
+- **Dockerfile**: Each app directory contains a Dockerfile that you can customize for your application's specific needs
+- **requirements.txt / package.json**: Update dependencies as needed for your technology stack
+- **version.py**: Version numbers are automatically managed by the CI/CD pipeline
+- **.gitlab-ci.yml**: CI/CD configuration is managed at the repository level
+
+## 📊 Monitoring & Access
+
+### Accessing Built Images
+Once built, your Docker images will be available at:
+```
+artifactory.nvidia.com/it-continum/kpi-functional-dashboard:{specific-version}
+```
+
+## Maintainers
+Galia Plotinsky - galiaf@nvidia.com
+
+---
+
+**Note**: The main KPI Dashboard is a client-side application with no server backend. All data is stored locally in your browser.

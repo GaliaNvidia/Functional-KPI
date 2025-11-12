@@ -1,0 +1,28 @@
+include:
+  - project: 'it-cf/ci-toolkit'
+    ref: '3.0.42'
+    file:
+      - .reusable_jobs/release/multi/apps_release.yml
+      - .reusable_jobs/docker/multi/buildkit/docker_build_and_push_rc.yml
+      - .reusable_jobs/docker/multi/buildkit/docker_build_and_push.yml
+
+stages:
+  - ci_toolkit_release
+
+variables:
+  LOG_LEVEL: "INFO"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  GITLAB_RUNNER_DOCKER_TAG: "ape-repo-k8s"
+
+  ############# AUTOMATED BADGES ###########################################
+  CI_TOOLKIT_AUTOMATED_BADGES: "['apps_release_badges.json']"
+  ##########################################################################
+  CI_TOOLKIT_MR_COMMENTER_BOT: "CI_TOOLKIT_VERSION_BOT"
+  ##########################################################################
+
+  ############# AUTOMATED DOCKER BUILD AND PUSH TO URM ##################
+  PUSH_TO_URM: "true"
+  PUSH_TO_URM_CONTINUUM: "true"
+  URM_IMAGE_PREFIX: "artifactory.nvidia.com/it-continum"
+  URM_DOCKER_REGISTRY_HOSTNAME: "artifactory.nvidia.com"
+  ##########################################################################

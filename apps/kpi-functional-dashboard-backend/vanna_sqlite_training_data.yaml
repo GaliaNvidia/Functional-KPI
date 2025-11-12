@@ -1,0 +1,319 @@
+ddl:
+  - |
+    CREATE TABLE Categories (
+        CategoryID INTEGER PRIMARY KEY,
+        CategoryName TEXT NOT NULL,
+        Description TEXT
+    );
+  - |
+    CREATE TABLE Suppliers (
+        SupplierID INTEGER PRIMARY KEY,
+        CompanyName TEXT NOT NULL,
+        ContactName TEXT,
+        ContactTitle TEXT,
+        Address TEXT,
+        City TEXT,
+        Region TEXT,
+        PostalCode TEXT,
+        Country TEXT,
+        Phone TEXT,
+        Fax TEXT,
+        HomePage TEXT
+    );
+  - |
+    CREATE TABLE Products (
+        ProductID INTEGER PRIMARY KEY,
+        ProductName TEXT NOT NULL,
+        SupplierID INTEGER,
+        CategoryID INTEGER,
+        QuantityPerUnit TEXT,
+        UnitPrice REAL DEFAULT 0,
+        UnitsInStock INTEGER DEFAULT 0,
+        UnitsOnOrder INTEGER DEFAULT 0,
+        ReorderLevel INTEGER DEFAULT 0,
+        Discontinued INTEGER DEFAULT 0,
+        FOREIGN KEY (CategoryID) REFERENCES Categories (CategoryID),
+        FOREIGN KEY (SupplierID) REFERENCES Suppliers (SupplierID)
+    );
+  - |
+    CREATE TABLE Customers (
+        CustomerID TEXT PRIMARY KEY,
+        CompanyName TEXT NOT NULL,
+        ContactName TEXT,
+        ContactTitle TEXT,
+        Address TEXT,
+        City TEXT,
+        Region TEXT,
+        PostalCode TEXT,
+        Country TEXT,
+        Phone TEXT,
+        Fax TEXT
+    );
+  - |
+    CREATE TABLE Employees (
+        EmployeeID INTEGER PRIMARY KEY,
+        LastName TEXT NOT NULL,
+        FirstName TEXT NOT NULL,
+        Title TEXT,
+        TitleOfCourtesy TEXT,
+        BirthDate DATE,
+        HireDate DATE,
+        Address TEXT,
+        City TEXT,
+        Region TEXT,
+        PostalCode TEXT,
+        Country TEXT,
+        HomePhone TEXT,
+        Extension TEXT,
+        Photo BLOB,
+        Notes TEXT,
+        ReportsTo INTEGER,
+        PhotoPath TEXT,
+        FOREIGN KEY (ReportsTo) REFERENCES Employees (EmployeeID)
+    );
+  - |
+    CREATE TABLE Orders (
+        OrderID INTEGER PRIMARY KEY,
+        CustomerID TEXT,
+        EmployeeID INTEGER,
+        OrderDate DATE,
+        RequiredDate DATE,
+        ShippedDate DATE,
+        ShipVia INTEGER,
+        Freight REAL DEFAULT 0,
+        ShipName TEXT,
+        ShipAddress TEXT,
+        ShipCity TEXT,
+        ShipRegion TEXT,
+        ShipPostalCode TEXT,
+        ShipCountry TEXT,
+        FOREIGN KEY (CustomerID) REFERENCES Customers (CustomerID),
+        FOREIGN KEY (EmployeeID) REFERENCES Employees (EmployeeID)
+    );
+  - |
+    CREATE TABLE [Order Details] (
+        OrderID INTEGER NOT NULL,
+        ProductID INTEGER NOT NULL,
+        UnitPrice NUMERIC NOT NULL DEFAULT 0,
+        Quantity INTEGER NOT NULL DEFAULT 1,
+        Discount REAL NOT NULL DEFAULT 0,
+        PRIMARY KEY (OrderID, ProductID),
+        CHECK (Discount >= 0 AND Discount <= 1),
+        CHECK (Quantity > 0),
+        CHECK (UnitPrice >= 0),
+        FOREIGN KEY (OrderID) REFERENCES Orders (OrderID),
+        FOREIGN KEY (ProductID) REFERENCES Products (ProductID)
+    );
+  - |
+    CREATE TABLE Regions (
+        RegionID INTEGER PRIMARY KEY,
+        RegionDescription TEXT NOT NULL
+    );
+  - |
+    CREATE TABLE Territories (
+        TerritoryID TEXT PRIMARY KEY,
+        TerritoryDescription TEXT NOT NULL,
+        RegionID INTEGER NOT NULL,
+        FOREIGN KEY (RegionID) REFERENCES Regions (RegionID)
+    );
+  - |
+    CREATE TABLE EmployeeTerritories (
+        EmployeeID INTEGER,
+        TerritoryID TEXT,
+        PRIMARY KEY (EmployeeID, TerritoryID),
+        FOREIGN KEY (EmployeeID) REFERENCES Employees (EmployeeID),
+        FOREIGN KEY (TerritoryID) REFERENCES Territories (TerritoryID)
+    );
+
+documentation:
+  - |
+    The Northwind database is a sample database representing a trading company's business data.
+
+    Key Tables:
+    - Categories: Product categories (Beverages, Dairy Products, Seafood, etc.)
+    - Suppliers: Companies that supply products to Northwind
+    - Products: Product catalog with pricing, inventory, and supplier information
+    - Customers: Customer information including contact details and location
+    - Employees: Employee data with territories and reporting relationships
+    - Orders: Customer orders with shipping and date information
+    - OrderDetails: Line items for each order with quantities, prices, and discounts
+    - Territories: Sales territories assigned to employees
+    - Region: Geographic regions containing territories
+
+    Common Business Analysis Patterns:
+    - Join Orders with OrderDetails to get complete order information
+    - Join Products with Categories and Suppliers for product analysis
+    - Use date fields in Orders to analyze sales trends over time
+    - Calculate revenue using UnitPrice * Quantity * (1 - Discount) in OrderDetails
+    - Join Employees with Territories to analyze sales performance by region
+
+sql:
+  - question: "What are the top 10 best-selling products by quantity?"
+    sql: |
+      SELECT p.ProductName,
+             SUM(od.Quantity) as total_quantity_sold,
+             COUNT(DISTINCT od.OrderID) as number_of_orders
+      FROM Products p
+      JOIN [Order Details] od ON p.ProductID = od.ProductID
+      GROUP BY p.ProductID, p.ProductName
+      ORDER BY total_quantity_sold DESC
+      LIMIT 10;
+
+  - question: "Which customers have placed the most orders?"
+    sql: |
+      SELECT c.CompanyName,
+             c.ContactName,
+             c.City,
+             c.Country,
+             COUNT(o.OrderID) as total_orders
+      FROM Customers c
+      JOIN Orders o ON c.CustomerID = o.CustomerID
+      GROUP BY c.CustomerID, c.CompanyName, c.ContactName, c.City, c.Country
+      ORDER BY total_orders DESC
+      LIMIT 10;
+
+  - question: "Show monthly sales revenue for the current year"
+    sql: |
+      SELECT strftime('%Y-%m', o.OrderDate) as month,
+             ROUND(SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)), 2) as revenue,
+             COUNT(DISTINCT o.OrderID) as orders_count
+      FROM Orders o
+      JOIN [Order Details] od ON o.OrderID = od.OrderID
+      WHERE o.OrderDate IS NOT NULL
+      GROUP BY strftime('%Y-%m', o.OrderDate)
+      ORDER BY month DESC;
+
+  - question: "Which product categories generate the most revenue?"
+    sql: |
+      SELECT c.CategoryName,
+             ROUND(SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)), 2) as total_revenue,
+             COUNT(DISTINCT od.OrderID) as orders_count,
+             COUNT(DISTINCT od.ProductID) as products_count
+      FROM Categories c
+      JOIN Products p ON c.CategoryID = p.CategoryID
+      JOIN [Order Details] od ON p.ProductID = od.ProductID
+      GROUP BY c.CategoryID, c.CategoryName
+      ORDER BY total_revenue DESC;
+
+  - question: "Show employee sales performance"
+    sql: |
+      SELECT e.FirstName || ' ' || e.LastName as employee_name,
+             e.Title,
+             COUNT(DISTINCT o.OrderID) as orders_handled,
+             ROUND(SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)), 2) as total_sales
+      FROM Employees e
+      JOIN Orders o ON e.EmployeeID = o.EmployeeID
+      JOIN OrderDetails od ON o.OrderID = od.OrderID
+      GROUP BY e.EmployeeID, e.FirstName, e.LastName, e.Title
+      ORDER BY total_sales DESC;
+
+  - question: "Which suppliers provide the most products?"
+    sql: |
+      SELECT s.CompanyName,
+             s.ContactName,
+             s.City,
+             s.Country,
+             COUNT(p.ProductID) as products_supplied,
+             AVG(p.UnitPrice) as avg_product_price
+      FROM Suppliers s
+      JOIN Products p ON s.SupplierID = p.SupplierID
+      GROUP BY s.SupplierID, s.CompanyName, s.ContactName, s.City, s.Country
+      ORDER BY products_supplied DESC;
+
+  - question: "Show products that are running low on inventory"
+    sql: |
+      SELECT p.ProductName,
+             c.CategoryName,
+             s.CompanyName as supplier,
+             p.UnitsInStock,
+             p.ReorderLevel,
+             p.UnitsOnOrder,
+             CASE
+               WHEN p.UnitsInStock <= p.ReorderLevel THEN 'Reorder Now'
+               WHEN p.UnitsInStock <= p.ReorderLevel * 1.5 THEN 'Low Stock'
+               ELSE 'OK'
+             END as stock_status
+      FROM Products p
+      JOIN Categories c ON p.CategoryID = c.CategoryID
+      JOIN Suppliers s ON p.SupplierID = s.SupplierID
+      WHERE p.Discontinued = 0
+      ORDER BY p.UnitsInStock ASC;
+
+  - question: "What are the shipping costs by country?"
+    sql: |
+      SELECT o.ShipCountry,
+             COUNT(o.OrderID) as total_orders,
+             ROUND(AVG(o.Freight), 2) as avg_freight_cost,
+             ROUND(SUM(o.Freight), 2) as total_freight_cost
+      FROM Orders o
+      WHERE o.ShipCountry IS NOT NULL AND o.Freight IS NOT NULL
+      GROUP BY o.ShipCountry
+      ORDER BY total_freight_cost DESC;
+
+  - question: "Show customer order frequency and average order value"
+    sql: |
+      SELECT c.CompanyName,
+             c.City,
+             c.Country,
+             COUNT(o.OrderID) as total_orders,
+             ROUND(AVG(order_totals.order_value), 2) as avg_order_value,
+             ROUND(SUM(order_totals.order_value), 2) as total_customer_value
+      FROM Customers c
+      JOIN Orders o ON c.CustomerID = o.CustomerID
+      JOIN (
+        SELECT od.OrderID,
+               SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)) as order_value
+        FROM [Order Details] od
+        GROUP BY od.OrderID
+      ) order_totals ON o.OrderID = order_totals.OrderID
+      GROUP BY c.CustomerID, c.CompanyName, c.City, c.Country
+      ORDER BY total_customer_value DESC;
+
+  - question: "Which products have never been ordered?"
+    sql: |
+      SELECT p.ProductName,
+             c.CategoryName,
+             s.CompanyName as supplier,
+             p.UnitPrice,
+             p.UnitsInStock,
+             p.Discontinued
+      FROM Products p
+      JOIN Categories c ON p.CategoryID = c.CategoryID
+      JOIN Suppliers s ON p.SupplierID = s.SupplierID
+      LEFT JOIN [Order Details] od ON p.ProductID = od.ProductID
+      WHERE od.ProductID IS NULL
+      ORDER BY p.ProductName;
+
+  - question: "Show seasonal sales trends by quarter"
+    sql: |
+      SELECT
+        CASE
+          WHEN CAST(strftime('%m', o.OrderDate) AS INTEGER) IN (1,2,3) THEN 'Q1'
+          WHEN CAST(strftime('%m', o.OrderDate) AS INTEGER) IN (4,5,6) THEN 'Q2'
+          WHEN CAST(strftime('%m', o.OrderDate) AS INTEGER) IN (7,8,9) THEN 'Q3'
+          ELSE 'Q4'
+        END as quarter,
+        strftime('%Y', o.OrderDate) as year,
+        COUNT(DISTINCT o.OrderID) as orders,
+        ROUND(SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)), 2) as revenue
+      FROM Orders o
+      JOIN [Order Details] od ON o.OrderID = od.OrderID
+      WHERE o.OrderDate IS NOT NULL
+      GROUP BY quarter, year
+      ORDER BY year, quarter;
+
+  - question: "Find the most profitable products (highest margin)"
+    sql: |
+      SELECT p.ProductName,
+             c.CategoryName,
+             p.UnitPrice as current_price,
+             ROUND(AVG(od.UnitPrice), 2) as avg_selling_price,
+             ROUND(SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)), 2) as total_revenue,
+             SUM(od.Quantity) as total_quantity_sold
+      FROM Products p
+      JOIN Categories c ON p.CategoryID = c.CategoryID
+      JOIN [Order Details] od ON p.ProductID = od.ProductID
+      GROUP BY p.ProductID, p.ProductName, c.CategoryName, p.UnitPrice
+      HAVING total_quantity_sold > 100
+      ORDER BY total_revenue DESC
+      LIMIT 15;

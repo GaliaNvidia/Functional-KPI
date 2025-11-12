@@ -1,0 +1,54 @@
+[
+    {
+        "id": "1",
+        "question": "What are Northwind's top 10 best-selling products and which categories do they belong to?",
+        "answer": "The system should query the OrderDetails table to calculate total quantities sold per product, join with Products and Categories tables to get product names and category information, and return the top 10 products ranked by total quantity sold with their category names.
+        Louisiana Hot Spiced Okra - Category: Condiments, Total Quantity Sold: 206,213, Sir Rodney's Marmalade - Category: Confections, Total Quantity Sold: 205,637, Teatime Chocolate Biscuits - Category: Confections, Total Quantity Sold: 205,487
+        ",
+        "type": "text",
+        "category": "sales_analysis",
+        "subcategory": "product_performance",
+        "original_id": "1",
+        "source": "eval_set"
+    },
+    {
+        "id": "2",
+        "question": "Which customers have placed the most orders and what is their total order value?",
+        "answer": "The system should join Customers and Orders tables to count orders per customer, calculate total order values by joining with OrderDetails, and rank customers by both order frequency and total value, including customer company names and contact information.",
+        "type": "text",
+        "category": "customer_analysis",
+        "subcategory": "customer_value",
+        "original_id": "3",
+        "source": "eval_set"
+    },
+    {
+        "id": "3",
+        "question": "Which products are running low on inventory and need to be reordered?",
+        "answer": "The system should query the Products table to identify products where UnitsInStock is at or below ReorderLevel, excluding discontinued products, and include supplier information, current stock levels, and reorder quantities to help with inventory management decisions.",
+        "type": "text",
+        "category": "inventory_management",
+        "subcategory": "stock_levels",
+        "original_id": "4",
+        "source": "eval_set"
+    },
+    {
+        "id": "4",
+        "question": "Search content related to NPN programs",
+        "answer": "Should return a markdown table containing 'NPN Glossary' with a Confluence URL.",
+        "type": "eci",
+        "category": "eci_search",
+        "subcategory": "glossary",
+        "original_id": "6",
+        "source": "eval_set"
+    },
+    {
+        "id": "5",
+        "question": "Search content related to GTC DC DLIs",
+        "answer": "Should include a markdown table with different search results and corresponding URLs.",
+        "type": "eci",
+        "category": "eci_search",
+        "subcategory": "onboarding",
+        "original_id": "7",
+        "source": "eval_set"
+    }
+]
