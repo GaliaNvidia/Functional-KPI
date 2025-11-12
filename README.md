@@ -4,7 +4,7 @@ A source code repository for uploaded applications with automated Docker image b
 
 | latest version | type | description |
 | --- | --- | --- |
-| [![kpi-functional-dashboard](https://gitlab-master.nvidia.com/ape-repo/astra-projects/kpi-dash/-/jobs/artifacts/main/raw/public/badges/app-kpi-functional-dashboard.svg?job=multi_release:finalize)](https://gitlab-master.nvidia.com/ape-repo/astra-projects/kpi-dash/-/jobs/artifacts/main/raw/public/badges/app-kpi-functional-dashboard.svg?job=multi_release:finalize) | [![Docker](https://img-shield-cloudsre.gcp-int.nvidia.com/badge/Docker-2496ED?logo=docker&logoColor=fff)](#) | A Docker-based application. |
+| [![kpi-functional-dashboard-backend](https://gitlab-master.nvidia.com/ape-repo/astra-projects/kpi-dash/-/jobs/artifacts/main/raw/public/badges/app-kpi-functional-dashboard-backend.svg?job=multi_release:finalize)](https://gitlab-master.nvidia.com/ape-repo/astra-projects/kpi-dash/-/jobs/artifacts/main/raw/public/badges/app-kpi-functional-dashboard-backend.svg?job=multi_release:finalize) | [![PyPI](https://img-shield-cloudsre.gcp-int.nvidia.com/badge/PyPI-3775A9?logo=pypi&logoColor=fff)](#) | NAT React Agent Blueprint for Astra |
 
 🛑 This table is automatically generated. Please do not modify it!!!
 
